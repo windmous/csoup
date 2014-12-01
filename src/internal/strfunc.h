@@ -21,6 +21,9 @@
 #ifndef CSOUP_INTERNAL_STRFUNC_H_
 #define CSOUP_INTERNAL_STRFUNC_H_
 
+#include <cstring>
+#include <ctype>
+
 namespace csoup {
 namespace internal {
 
@@ -38,11 +41,17 @@ inline SizeType strLen(const Ch* s) {
 }
     
 template <typename Ch>
-inline int strCmp(const Ch* sa, const Ch* sb, SizeType len) {
+inline int strCmp(const Ch* sa, const Ch* sb, const SizeType len) {
+    return std::memcmp(sa, sb, sizeof(Ch) * len);
+}
+    
+template <typename Ch>
+inline int strCmpIgnoreCase(const Ch* sa, const Ch* sb, const SizeType len) {
     int i = 0;
-    while (i < len && sa[i] == sb[i]) i ++;
-
-    return i == len ? 0 : sa[i] - sb[i];
+    while (i < len && std::tolower(sa[i]) == std::tolower(sb[i]))
+        i ++;
+    
+    return i == len ? 0 : std::tolower(sa[i]) - std::tolower(sb[i]);
 }
     
 } // namespace internal

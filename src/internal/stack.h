@@ -20,7 +20,7 @@
 
 #ifndef CSOUP_INTERNAL_STACK_H_
 #define CSOUP_INTERNAL_STACK_H_
-#include "../util/common.h"
+#include "bytearray.h"
 
 namespace csoup {
     namespace internal {
@@ -36,100 +36,61 @@ namespace csoup {
         public:
             // Optimization note: Do not allocate memory for stack_ in constructor.
             // Do it lazily when first Push() -> Expand() -> Resize().
-            Stack(Allocator* allocator, size_t stackCapacity) : allocator_(allocator), ownAllocator(0), stack_(0), stackTop_(0), stackEnd_(0), initialCapacity_(stackCapacity) {
+            Stack(Allocator* allocator, size_t stackCapacity) : data_(allocator, stackCapacity) {
                 CSOUP_ASSERT(stackCapacity > 0);
-                if (!allocator_)
-                    ownAllocator = allocator_ = new Allocator();
+
             }
             
             ~Stack() {
-                Allocator::free(stack_);
-                delete ownAllocator; // Only delete if it is owned by the stack
             }
             
-            void clear() { stackTop_ = stack_; }
+            void clear() { data_.clear(); }
             
             void shrinkToFit() {
-                if (empty()) {
-                    // If the stack is empty, completely deallocate the memory.
-                    Allocator::free(stack_);
-                    stack_ = 0;
-                    stackTop_ = 0;
-                    stackEnd_ = 0;
-                }
-                else
-                    resize(getSize());
+                data_.shrinkToFit();
             }
             
             // Optimization note: try to minimize the size of this function for force inline.
             // Expansion is run very infrequently, so it is moved to another (probably non-inline) function.
             template<typename T>
-            CSOUP_FORCEINLINE T* push(size_t count = 1) {
-                // Expand the stack if needed
-                if (stackTop_ + sizeof(T) * count >= stackEnd_)
-                    expand<T>(count);
-                
-                T* ret = reinterpret_cast<T*>(stackTop_);
-                stackTop_ += sizeof(T) * count;
-                return ret;
+            CSOUP_FORCEINLINE T* push() {
+                return data_.template push<T>(1);
             }
             
             template<typename T>
-            T* pop(size_t count) {
-                CSOUP_ASSERT(getSize() >= count * sizeof(T));
-                stackTop_ -= count * sizeof(T);
-                return reinterpret_cast<T*>(stackTop_);
+            CSOUP_FORCEINLINE void push(const T& ele) {
+                new (data_.template push<T>(1)) T(ele);
             }
             
-            template<typename T>
+            template <typename T>
+            T* pop() {
+                return data_.template pop<T>(1);
+            }
+            
+            template <typename T>
+            void popAndDestroy() {
+                pop<T>()->~T();
+            }
+            
+            template <typename T>
             T* top() {
-                CSOUP_ASSERT(getSize() >= sizeof(T));
-                return reinterpret_cast<T*>(stackTop_ - sizeof(T));
+                return data_.template top<T>();
             }
             
             template<typename T>
-            T* bottom() { return (T*)stack_; }
+            T* bottom() { return data_.template bottom<T>(); }
             
-            Allocator& getAllocator() { return *allocator_; }
-            bool empty() const { return stackTop_ == stack_; }
-            size_t getSize() const { return static_cast<size_t>(stackTop_ - stack_); }
-            size_t getCapacity() const { return static_cast<size_t>(stackEnd_ - stack_); }
+            Allocator& getAllocator() { return data_.getAllocator(); }
+            bool empty() const { return data_.empty(); }
+            size_t getSize() const { return data_.getSize(); }
+            size_t getCapacity() const { return data_.getCapacity(); }
             
         private:
-            template<typename T>
-            void expand(size_t count) {
-                // Only expand the capacity if the current stack exists. Otherwise just create a stack with initial capacity.
-                size_t newCapacity;
-                if (stack_ == 0)
-                    newCapacity = initialCapacity_;
-                else {
-                    newCapacity = getCapacity();
-                    newCapacity += (newCapacity + 1) / 2;
-                }
-                size_t newSize = getSize() + sizeof(T) * count;
-                if (newCapacity < newSize)
-                    newCapacity = newSize;
-                
-                resize(newCapacity);
-            }
-            
-            void resize(size_t newCapacity) {
-                const size_t size = getSize();  // Backup the current size
-                stack_ = (char*)allocator_->realloc(stack_, getCapacity(), newCapacity);
-                stackTop_ = stack_ + size;
-                stackEnd_ = stack_ + newCapacity;
-            }
-            
-            // Prohibit copy constructor & assignment operator.
+                        // Prohibit copy constructor & assignment operator.
             Stack(const Stack&);
             Stack& operator=(const Stack&);
             
-            Allocator* allocator_;
-            Allocator* ownAllocator;
-            char *stack_;
-            char *stackTop_;
-            char *stackEnd_;
-            size_t initialCapacity_;
+            ByteArray<Allocator> data_;
         };
         
     } // namespace internal

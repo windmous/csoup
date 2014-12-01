@@ -21,7 +21,7 @@
 #ifndef CSOUP_ALLOCATORS_H_
 #define CSOUP_ALLOCATORS_H_
 
-//#include "common.h"
+#include "common.h"
 
 namespace csoup {
 

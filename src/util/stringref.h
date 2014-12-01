@@ -120,7 +120,9 @@ struct StringRef {
         return this->length == obj.length && strCmp(this->s, obj.s) == 0;
     }
     
-    bool equalsIgnore
+    bool equalsIgnoreCase(const StringRef<Ch>& obj) const {
+        return this->length == obj.length && strCmpIgnoreCase(this->s, obj.s) == 0；
+    }
 
     //! implicit conversion to plain CharType pointer
     operator const Ch *() const { return s; }

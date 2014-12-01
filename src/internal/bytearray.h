@@ -18,31 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef CSOUP_INTERNAL_BYTEBUFFER_H_
-#define CSOUP_INTERNAL_BYTEBUFFER_H_
+#ifndef CSOUP_INTERNAL_BYTEARRAY_H_
+#define CSOUP_INTERNAL_BYTEARRAY_H_
 #include "../util/common.h"
 
 namespace csoup {
     namespace internal {
         
         ///////////////////////////////////////////////////////////////////////////////
-        // ByteBuffer
+        // ByteArray
         
         //! A type-unsafe stack for storing different types of data.
         /*! \tparam Allocator Allocator for allocating stack memory.
          */
         template <typename Allocator>
-        class ByteBuffer {
+        class ByteArray {
         public:
             // Optimization note: Do not allocate memory for stack_ in constructor.
             // Do it lazily when first Push() -> Expand() -> Resize().
-            ByteBuffer(Allocator* allocator, size_t stackCapacity) : allocator_(allocator), ownAllocator(0), stack_(0), stackTop_(0), stackEnd_(0), initialCapacity_(stackCapacity) {
+            ByteArray(Allocator* allocator, size_t stackCapacity) : allocator_(allocator), ownAllocator(0), stack_(0), stackTop_(0), stackEnd_(0), initialCapacity_(stackCapacity) {
                 CSOUP_ASSERT(stackCapacity > 0);
                 if (!allocator_)
                     ownAllocator = allocator_ = new Allocator();
             }
             
-            ~ByteBuffer() {
+            ~ByteArray() {
                 Allocator::free(stack_);
                 delete ownAllocator; // Only delete if it is owned by the stack
             }
@@ -88,7 +88,7 @@ namespace csoup {
             }
             
             template<typename T>
-            T* at(SizeType i) const {
+            T* at(size_t i) const {
                 CSOUP_ASSERT(stack_ + (i + 1) * sizeof(T) <= stackTop_);
                 return reinterpret_cast<T*>(stack_ + i * sizeof(T));
             }
@@ -127,8 +127,8 @@ namespace csoup {
             }
             
             // Prohibit copy constructor & assignment operator.
-            ByteBuffer(const ByteBuffer&);
-            ByteBuffer& operator=(const ByteBuffer&);
+            ByteArray(const ByteArray&);
+            ByteArray& operator=(const ByteArray&);
             
             Allocator* allocator_;
             Allocator* ownAllocator;
@@ -141,4 +141,4 @@ namespace csoup {
     } // namespace internal
 } // namespace rapidjson
 
-#endif // CSOUP_INTERNAL_BYTEBUFFER_H_
+#endif // CSOUP_INTERNAL_BYTEARRAY_H_
