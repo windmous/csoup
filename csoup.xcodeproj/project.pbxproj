@@ -34,6 +34,7 @@
 		049998371A28D25D00DCA5BF /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stack.h; sourceTree = "<group>"; };
 		049998381A2B6A0100DCA5BF /* vector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vector.h; sourceTree = "<group>"; };
 		0499983A1A2C036F00DCA5BF /* bytearray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bytearray.h; sourceTree = "<group>"; };
+		0499983B1A2C115100DCA5BF /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +120,7 @@
 		0499982E1A28CD2F00DCA5BF /* util */ = {
 			isa = PBXGroup;
 			children = (
+				0499983B1A2C115100DCA5BF /* error.h */,
 				0499982F1A28CD2F00DCA5BF /* allocators.h */,
 				049998301A28CD2F00DCA5BF /* common.h */,
 				049998311A28CD2F00DCA5BF /* encodings.h */,
