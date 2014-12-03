@@ -21,7 +21,10 @@
 #ifndef CSOUP_STRINGREF_H_
 #define CSOUP_STRINGREF_H_
 
-#included "../internal/strfunc.h"
+#include "common.h"
+#include "../internal/strfunc.h"
+
+namespace csoup {
 
 ///////////////////////////////////////////////////////////////////////////////
 // GenericStringRef
@@ -54,7 +57,7 @@
     \see StringRef, GenericValue::SetString
 */
 template<typename CharType>
-struct StringRef {
+struct GenericStringRef {
     typedef CharType Ch; //!< character type of the string
 
     //! Create string reference from \c const character array
@@ -81,7 +84,7 @@ struct StringRef {
             GenericValue instead.
      */
     template<SizeType N>
-    StringRef(const CharType (&str)[N]) CSOUP_NOEXCEPT
+    GenericStringRef(const CharType (&str)[N]) CSOUP_NOEXCEPT
         : s(str), length(N-1) {}
 
     //! Explicitly create string reference from \c const character pointer
@@ -103,8 +106,8 @@ struct StringRef {
             In such cases, the referenced string should be \b copied to the
             GenericValue instead.
      */
-    explicit StringRef(const CharType* str)
-        : s(str), length(internal::StrLen(str)){ CSOUP_ASSERT(s != NULL); }
+    explicit GenericStringRef(const CharType* str)
+        : s(str), length(internal::strLen(str)){ CSOUP_ASSERT(s != NULL); }
 
     //! Create constant string reference from pointer and length
     /*! \param str constant string, lifetime assumed to be longer than the use of the string in e.g. a GenericValue
@@ -113,15 +116,15 @@ struct StringRef {
         \post \ref s == str && \ref length == len
         \note Constant complexity.
      */
-    StringRef(const CharType* str, SizeType len)
+    GenericStringRef(const CharType* str, SizeType len)
         : s(str), length(len) { CSOUP_ASSERT(s != NULL); }
     
-    bool operator == (const StringRef<Ch>& obj) const {
+    bool operator == (const GenericStringRef<Ch>& obj) const {
         return this->length == obj.length && strCmp(this->s, obj.s) == 0;
     }
     
-    bool equalsIgnoreCase(const StringRef<Ch>& obj) const {
-        return this->length == obj.length && strCmpIgnoreCase(this->s, obj.s) == 0；
+    bool equalsIgnoreCase(const GenericStringRef<Ch>& obj) const {
+        return this->length == obj.length && strCmpIgnoreCase(this->s, obj.s) == 0;
     }
 
     //! implicit conversion to plain CharType pointer
@@ -130,12 +133,16 @@ struct StringRef {
     const Ch* const s; //!< plain CharType pointer
     const SizeType length; //!< length of the string (excluding the trailing NULL terminator)
 
+    template <typename Allocator>
+    GenericStringRef<Ch>* clone(Allocator* allocator) const {
+        
+    }
 private:
     //! Disallow copy-assignment
-    StringRef operator=(const StringRef&);
+    GenericStringRef operator=(const StringRef&);
     //! Disallow construction from non-const array
     template<SizeType N>
-    StringRef(CharType (&str)[N]) /* = delete */;
+    GenericStringRef(CharType (&str)[N]) /* = delete */;
 };
 
 //! Mark a character pointer as constant string
@@ -193,5 +200,6 @@ inline StringRef<CharType> makeStringRef(const std::basic_string<CharType>& str)
     return StringRef<CharType>(str.data(), SizeType(str.size()));
 }
 #endif
+}
 
 #endif // CSOUP_STRINGREF_H_
