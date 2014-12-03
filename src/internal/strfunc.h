@@ -22,7 +22,7 @@
 #define CSOUP_INTERNAL_STRFUNC_H_
 
 #include <cstring>
-#include <ctype>
+#include <cctype>
 
 namespace csoup {
 namespace internal {
