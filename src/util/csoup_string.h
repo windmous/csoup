@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef CSOUP_STRINGREF_H_
-#define CSOUP_STRINGREF_H_
+#ifndef CSOUP_CSOUP_STRING_H_
+#define CSOUP_CSOUP_STRING_H_
 
 #include <cstring>
 #include "common.h"
@@ -224,4 +224,4 @@ inline GenericString<CharType> String(const std::basic_string<CharType>& str) {
 #endif
 }
 
-#endif // CSOUP_STRINGREF_H_
+#endif // CSOUP_CSOUP_STRING_H_
