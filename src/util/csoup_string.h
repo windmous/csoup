@@ -21,13 +21,16 @@
 #ifndef CSOUP_STRINGREF_H_
 #define CSOUP_STRINGREF_H_
 
+#include <cstring>
 #include "common.h"
 #include "../internal/strfunc.h"
+
+#include <stdio.h>
 
 namespace csoup {
 
 ///////////////////////////////////////////////////////////////////////////////
-// GenericStringRef
+// GenericString
 
 //! Reference to a constant string (not taking a copy)
 /*!
@@ -57,8 +60,11 @@ namespace csoup {
     \see StringRef, GenericValue::SetString
 */
 template<typename CharType>
-struct GenericStringRef {
+class GenericString {
+public:
     typedef CharType Ch; //!< character type of the string
+    
+    typedef GenericString<Ch> StringType;
 
     //! Create string reference from \c const character array
     /*!
@@ -84,8 +90,8 @@ struct GenericStringRef {
             GenericValue instead.
      */
     template<SizeType N>
-    GenericStringRef(const CharType (&str)[N]) CSOUP_NOEXCEPT
-        : s(str), length(N-1) {}
+    GenericString(const CharType (&str)[N]) CSOUP_NOEXCEPT
+        : data_(str), length_(N-1) {}
 
     //! Explicitly create string reference from \c const character pointer
     /*!
@@ -106,8 +112,8 @@ struct GenericStringRef {
             In such cases, the referenced string should be \b copied to the
             GenericValue instead.
      */
-    explicit GenericStringRef(const CharType* str)
-        : s(str), length(internal::strLen(str)){ CSOUP_ASSERT(s != NULL); }
+    explicit GenericString(const CharType* str)
+        : data_(str), length_(internal::strLen(str)){ CSOUP_ASSERT(data_ != NULL); }
 
     //! Create constant string reference from pointer and length
     /*! \param str constant string, lifetime assumed to be longer than the use of the string in e.g. a GenericValue
@@ -116,34 +122,50 @@ struct GenericStringRef {
         \post \ref s == str && \ref length == len
         \note Constant complexity.
      */
-    GenericStringRef(const CharType* str, SizeType len)
-        : s(str), length(len) { CSOUP_ASSERT(s != NULL); }
+    GenericString(const CharType* str, SizeType len)
+        : data_(str), length_(len) { CSOUP_ASSERT(data_ != NULL); }
     
-    bool operator == (const GenericStringRef<Ch>& obj) const {
+    bool operator == (const GenericString<Ch>& obj) const {
         return this->length == obj.length && strCmp(this->s, obj.s) == 0;
     }
     
-    bool equalsIgnoreCase(const GenericStringRef<Ch>& obj) const {
+    bool equalsIgnoreCase(const GenericString<Ch>& obj) const {
         return this->length == obj.length && strCmpIgnoreCase(this->s, obj.s) == 0;
     }
 
     //! implicit conversion to plain CharType pointer
-    operator const Ch *() const { return s; }
-
-    const Ch* const s; //!< plain CharType pointer
-    const SizeType length; //!< length of the string (excluding the trailing NULL terminator)
-
-    template <typename Allocator>
-    GenericStringRef<Ch>* clone(Allocator* allocator) const {
-        
-    }
+    operator const Ch *() const { return data_; }
+    
+    const Ch* data() const {return data_; }
+    
+    const SizeType size() const {return length_;}
+    
 private:
+    const Ch* const data_; //!< plain CharType pointer
+    const SizeType length_; //!< length of the string (excluding the trailing NULL terminator)
+    
     //! Disallow copy-assignment
-    GenericStringRef operator=(const StringRef&);
+    GenericString operator=(const GenericString&);
     //! Disallow construction from non-const array
     template<SizeType N>
-    GenericStringRef(CharType (&str)[N]) /* = delete */;
+    GenericString(CharType (&str)[N]) /* = delete */;
 };
+    
+    template <typename CharType, typename Allocator>
+    GenericString<CharType>
+    deepcopy(const GenericString<CharType>& obj, Allocator* allocator) {
+        const SizeType data_size = sizeof(typename GenericString<CharType>::Ch) * obj.size();
+        CharType* s = static_cast<CharType*>(allocator->malloc(data_size));
+        std::memcpy(s, obj.data(), obj.size());
+        
+        return GenericString<CharType>(s, obj.size());
+    }
+    
+    template <typename CharType, typename Allocator>
+    void destroy(GenericString<CharType>* obj, Allocator* allocator) {
+        allocator->free(obj->data());
+        obj->~GenericString<CharType>();
+    }
 
 //! Mark a character pointer as constant string
 /*! Mark a plain character pointer as a "string literal".  This function
@@ -152,14 +174,14 @@ private:
     to be valid long enough.
     \tparam CharType Character type of the string
     \param str Constant string, lifetime assumed to be longer than the use of the string in e.g. a GenericValue
-    \return GenericStringRef string reference object
-    \relatesalso GenericStringRef
+    \return GenericString string reference object
+    \relatesalso GenericString
 
     \see GenericValue::GenericValue(StringRefType), GenericValue::operator=(StringRefType), GenericValue::SetString(StringRefType), GenericValue::PushBack(StringRefType, Allocator&), GenericValue::AddMember
 */
 template<typename CharType>
-inline StringRef<CharType> makeStringRef(const CharType* str) {
-    return StringRef<CharType>(str, internal::strLen(str));
+inline GenericString<CharType> String(const CharType* str) {
+    return GenericString<CharType>(str, internal::strLen(str));
 }
 
 //! Mark a character pointer as constant string
@@ -174,12 +196,12 @@ inline StringRef<CharType> makeStringRef(const CharType* str) {
     \tparam CharType character type of the string
     \param str Constant string, lifetime assumed to be longer than the use of the string in e.g. a GenericValue
     \param length The length of source string.
-    \return GenericStringRef string reference object
-    \relatesalso GenericStringRef
+    \return GenericString string reference object
+    \relatesalso GenericString
 */
 template<typename CharType>
-inline StringRef<CharType> makeStringRef(const CharType* str, size_t length) {
-    return StringRef<CharType>(str, SizeType(length));
+inline GenericString<CharType> String(const CharType* str, size_t length) {
+    return GenericString<CharType>(str, SizeType(length));
 }
 
 #if CSOUP_HAS_STDSTRING
@@ -191,13 +213,13 @@ inline StringRef<CharType> makeStringRef(const CharType* str, size_t length) {
 
     \tparam CharType character type of the string
     \param str Constant string, lifetime assumed to be longer than the use of the string in e.g. a GenericValue
-    \return GenericStringRef string reference object
-    \relatesalso GenericStringRef
+    \return GenericString string reference object
+    \relatesalso GenericString
     \note Requires the definition of the preprocessor symbol \ref RAPIDJSON_HAS_STDSTRING.
 */
 template<typename CharType>
-inline StringRef<CharType> makeStringRef(const std::basic_string<CharType>& str) {
-    return StringRef<CharType>(str.data(), SizeType(str.size()));
+inline GenericString<CharType> String(const std::basic_string<CharType>& str) {
+    return GenericString<CharType>(str.data(), SizeType(str.size()));
 }
 #endif
 }
