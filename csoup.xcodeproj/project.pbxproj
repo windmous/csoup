@@ -28,6 +28,18 @@
 		045630381A2CCFCC008D89A6 /* attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = attribute.h; sourceTree = "<group>"; };
 		0456303A1A2E29AB008D89A6 /* csoup_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = csoup_string.h; sourceTree = "<group>"; };
 		0456303B1A2EA117008D89A6 /* deepcopy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = deepcopy.h; sourceTree = "<group>"; };
+		0456303C1A2F526B008D89A6 /* comment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = comment.h; sourceTree = "<group>"; };
+		0456303D1A2F526B008D89A6 /* datanode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = datanode.h; sourceTree = "<group>"; };
+		0456303E1A2F526B008D89A6 /* document.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = document.h; sourceTree = "<group>"; };
+		0456303F1A2F526B008D89A6 /* documenttype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = documenttype.h; sourceTree = "<group>"; };
+		045630401A2F526B008D89A6 /* element.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = element.h; sourceTree = "<group>"; };
+		045630411A2F526B008D89A6 /* entities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = entities.h; sourceTree = "<group>"; };
+		045630421A2F526B008D89A6 /* formelement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = formelement.h; sourceTree = "<group>"; };
+		045630431A2F526B008D89A6 /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
+		045630441A2F526B008D89A6 /* textnode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textnode.h; sourceTree = "<group>"; };
+		045630451A2F526B008D89A6 /* xmldeclaration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xmldeclaration.h; sourceTree = "<group>"; };
+		045630461A2F585B008D89A6 /* attributes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = attributes.h; sourceTree = "<group>"; };
+		045630471A2F5BF4008D89A6 /* list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = list.h; sourceTree = "<group>"; };
 		0499981B1A28CC9D00DCA5BF /* csoup */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = csoup; sourceTree = BUILT_PRODUCTS_DIR; };
 		049998271A28CD2F00DCA5BF /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		0499982A1A28CD2F00DCA5BF /* strfunc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = strfunc.h; sourceTree = "<group>"; };
@@ -92,6 +104,7 @@
 		049998281A28CD2F00DCA5BF /* internal */ = {
 			isa = PBXGroup;
 			children = (
+				045630471A2F5BF4008D89A6 /* list.h */,
 				0456303B1A2EA117008D89A6 /* deepcopy.h */,
 				0499983A1A2C036F00DCA5BF /* bytearray.h */,
 				049998381A2B6A0100DCA5BF /* vector.h */,
@@ -104,6 +117,17 @@
 		0499982B1A28CD2F00DCA5BF /* nodes */ = {
 			isa = PBXGroup;
 			children = (
+				045630461A2F585B008D89A6 /* attributes.h */,
+				0456303C1A2F526B008D89A6 /* comment.h */,
+				0456303D1A2F526B008D89A6 /* datanode.h */,
+				0456303E1A2F526B008D89A6 /* document.h */,
+				0456303F1A2F526B008D89A6 /* documenttype.h */,
+				045630401A2F526B008D89A6 /* element.h */,
+				045630411A2F526B008D89A6 /* entities.h */,
+				045630421A2F526B008D89A6 /* formelement.h */,
+				045630431A2F526B008D89A6 /* node.h */,
+				045630441A2F526B008D89A6 /* textnode.h */,
+				045630451A2F526B008D89A6 /* xmldeclaration.h */,
 				045630371A2CCFCC008D89A6 /* attribute.cpp */,
 				045630381A2CCFCC008D89A6 /* attribute.h */,
 			);

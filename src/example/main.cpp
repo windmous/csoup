@@ -33,5 +33,7 @@ int main(int argc, const char * argv[]) {
     GenericString<char> s("good");
     CrtAllocator allo;
     deepcopy(s, &allo);
+    
+    Attribute attr(CSOUP_ATTR_NAMESPACE_NONE, "class", "dream");
     return 0;
 }
