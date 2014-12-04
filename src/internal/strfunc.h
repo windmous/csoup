@@ -23,6 +23,7 @@
 
 #include <cstring>
 #include <cctype>
+#include "../util/common.h"
 
 namespace csoup {
 namespace internal {
@@ -33,20 +34,17 @@ namespace internal {
     \return Number of characters in the string. 
     \note This has the same semantics as strlen(), the return value is not number of Unicode codepoints.
 */
-template <typename Ch>
-inline SizeType strLen(const Ch* s) {
+inline size_t strLen(const Ch* s) {
     const Ch* p = s;
     while (*p) ++p;
-    return SizeType(p - s);
+    return size_t(p - s);
 }
     
-template <typename Ch>
-inline int strCmp(const Ch* sa, const Ch* sb, const SizeType len) {
+inline int strCmp(const Ch* sa, const Ch* sb, const size_t len) {
     return std::memcmp(sa, sb, sizeof(Ch) * len);
 }
     
-template <typename Ch>
-inline int strCmpIgnoreCase(const Ch* sa, const Ch* sb, const SizeType len) {
+inline int strCmpIgnoreCase(const Ch* sa, const Ch* sb, const size_t len) {
     int i = 0;
     while (i < len && std::tolower(sa[i]) == std::tolower(sb[i]))
         i ++;
