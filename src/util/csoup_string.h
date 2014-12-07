@@ -1,136 +1,69 @@
-// Copyright (C) 2011 Milo Yip
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 #ifndef CSOUP_CSOUP_STRING_H_
 #define CSOUP_CSOUP_STRING_H_
 
 #include <cstring>
 #include "common.h"
+#include "allocators.h"
 #include "../internal/strfunc.h"
 
-#include <stdio.h>
+// NO_EXCEPTION should be reconsidered carefully
 
 namespace csoup {
+    
+    class String;
+    namespace internal {
+        extern void destroy(String* obj, Allocator* allocator);
+    }
 
-///////////////////////////////////////////////////////////////////////////////
-// GenericString
-
-//! Reference to a constant string (not taking a copy)
-/*!
-    \tparam CharType character type of the string
-
-    This helper class is used to automatically infer constant string
-    references for string literals, especially from \c const \b (!)
-    character arrays.
-
-    The main use is for creating JSON string values without copying the
-    source string via an \ref Allocator.  This requires that the referenced
-    string pointers have a sufficient lifetime, which exceeds the lifetime
-    of the associated GenericValue.
-
-    \b Example
-    \code
-    Value v("foo");   // ok, no need to copy & calculate length
-    const char foo[] = "foo";
-    v.SetString(foo); // ok
-
-    const char* bar = foo;
-    // Value x(bar); // not ok, can't rely on bar's lifetime
-    Value x(StringRef(bar)); // lifetime explicitly guaranteed by user
-    Value y(StringRef(bar, 3));  // ok, explicitly pass length
-    \endcode
-
-    \see StringRef, GenericValue::SetString
-*/
-template<typename CharType>
-class GenericString {
+class String {
 public:
-    typedef CharType Ch; //!< character type of the string
+    template<size_t N>
+    String(const CharType (&str)[N], Allocator* allocator) CSOUP_NOEXCEPT
+        : data_(NULL), length_(N-1) {
+        CSOUP_ASSERT(length_ <= MaxStringLength);
+        CSOUP_ASSERT(allocator != NULL);
     
-    typedef GenericString<Ch> StringType;
+        copyString(str, allocator);
+    }
 
-    //! Create string reference from \c const character array
-    /*!
-        This constructor implicitly creates a constant string reference from
-        a \c const character array.  It has better performance than
-        \ref StringRef(const CharType*) by inferring the string \ref length
-        from the array length, and also supports strings containing null
-        characters.
+    explicit String(const CharType* str, Allocator* allocator)
+        : data_(NULL), length_(internal::strLen(str)){
+            CSOUP_ASSERT(str != NULL);
+            CSOUP_ASSERT(length_ <= MaxStringLength);
+            CSOUP_ASSERT(allocator != NULL);
+            
+            copyString(str, allocator);
+    }
 
-        \tparam N length of the string, automatically inferred
-
-        \param str Constant character array, lifetime assumed to be longer
-            than the use of the string in e.g. a GenericValue
-
-        \post \ref s == str
-
-        \note Constant complexity.
-        \note There is a hidden, private overload to disallow references to
-            non-const character arrays to be created via this constructor.
-            By this, e.g. function-scope arrays used to be filled via
-            \c snprintf are excluded from consideration.
-            In such cases, the referenced string should be \b copied to the
-            GenericValue instead.
-     */
-    template<SizeType N>
-    GenericString(const CharType (&str)[N]) CSOUP_NOEXCEPT
-        : data_(str), length_(N-1) {}
-
-    //! Explicitly create string reference from \c const character pointer
-    /*!
-        This constructor can be used to \b explicitly  create a reference to
-        a constant string pointer.
-
-        \see StringRef(const CharType*)
-
-        \param str Constant character pointer, lifetime assumed to be longer
-            than the use of the string in e.g. a GenericValue
-
-        \post \ref s == str
-
-        \note There is a hidden, private overload to disallow references to
-            non-const character arrays to be created via this constructor.
-            By this, e.g. function-scope arrays used to be filled via
-            \c snprintf are excluded from consideration.
-            In such cases, the referenced string should be \b copied to the
-            GenericValue instead.
-     */
-    explicit GenericString(const CharType* str)
-        : data_(str), length_(internal::strLen(str)){ CSOUP_ASSERT(data_ != NULL); }
-
-    //! Create constant string reference from pointer and length
-    /*! \param str constant string, lifetime assumed to be longer than the use of the string in e.g. a GenericValue
-        \param len length of the string, excluding the trailing NULL terminator
-
-        \post \ref s == str && \ref length == len
-        \note Constant complexity.
-     */
-    GenericString(const CharType* str, SizeType len)
-        : data_(str), length_(len) { CSOUP_ASSERT(data_ != NULL); }
-    
-    bool operator == (const GenericString<Ch>& obj) const {
-        return this->length == obj.length && strCmp(this->s, obj.s) == 0;
+    String(const CharType* str, const size_t len, Allocator* allocator)
+        : data_(str), length_(len) {
+        CSOUP_ASSERT(str != NULL);
+        CSOUP_ASSERT(len <= MaxStringLength);
+        CSOUP_ASSERT(allocator != NULL);
+            
+        copyString(str, allocator);
     }
     
-    bool equalsIgnoreCase(const GenericString<Ch>& obj) const {
-        return this->length == obj.length && strCmpIgnoreCase(this->s, obj.s) == 0;
+    static String fromRawData(const CharType* str, const size_t len) CSOUP_NOEXCEPT {
+        return String(str, len);
+    }
+    
+    static String fromRawData(const CharType* str) {
+        return String(str, internal::strLen(str));
+    }
+    
+    template<size_t N>
+    String fromRawData(const CharType (&str)[N]) CSOUP_NOEXCEPT {
+        return String(str, N - 1);
+    }
+    
+    bool operator == (const String& obj) const {
+        return (this == &obj) || (size() == obj.size() && internal::strCmp(this->data_, obj.data_, size()) == 0);
+    }
+    
+    bool equalsIgnoreCase(const String& obj) const {
+        return (this == &obj) || (size() == obj.size() &&
+            internal::strCmpIgnoreCase(this->data_, obj.data_, size()) == 0);
     }
 
     //! implicit conversion to plain CharType pointer
@@ -138,33 +71,61 @@ public:
     
     const Ch* data() const {return data_; }
     
-    const SizeType size() const {return length_;}
+    const size_t size() const {return length_ & InvertedCopyBitMask;}
     
+    //friend String deepcopy(const String& obj, Allocator* allocator);
+    friend void internal::destroy(String* obj, Allocator* allocator);
 private:
-    const Ch* const data_; //!< plain CharType pointer
-    const SizeType length_; //!< length of the string (excluding the trailing NULL terminator)
+    static size_t CopyBitMask;
+    static size_t InvertedCopyBitMask;
+    static size_t MaxStringLength;
     
-    //! Disallow copy-assignment
-    GenericString operator=(const GenericString&);
-    //! Disallow construction from non-const array
-    template<SizeType N>
-    GenericString(CharType (&str)[N]) /* = delete */;
-};
-    
-    template <typename CharType, typename Allocator>
-    GenericString<CharType>
-    deepcopy(const GenericString<CharType>& obj, Allocator* allocator) {
-        const SizeType data_size = sizeof(typename GenericString<CharType>::Ch) * obj.size();
-        CharType* s = static_cast<CharType*>(allocator->malloc(data_size));
-        std::memcpy(s, obj.data(), obj.size());
-        
-        return GenericString<CharType>(s, obj.size());
+    String(const Ch* str, const size_t len) : data_(str), length_(len) {
+        CSOUP_ASSERT(str != NULL);
+        CSOUP_ASSERT(len <= MaxStringLength);
     }
     
-    template <typename CharType, typename Allocator>
-    void destroy(GenericString<CharType>* obj, Allocator* allocator) {
-        allocator->free(obj->data());
-        obj->~GenericString<CharType>();
+    void copyString(const Ch* str, Allocator* allocator) {
+        size_t buffSize = sizeof(Ch) * length_;
+        if (buffSize == 0) {
+            data_ = "";
+        } else {
+            Ch* buffer = static_cast<Ch*>(allocator->malloc(buffSize));
+            length_ |= CopyBitMask;
+        
+            std::memcpy(buffer, str, buffSize);
+            data_ = buffer;
+        }
+    }
+    
+    const Ch* data_; //!< plain CharType pointer
+    size_t length_; //!< length of the string (excluding the trailing NULL terminator)
+    
+    //! Disallow copy-assignment
+    String operator=(const String&);
+    //! Disallow construction from non-const array
+    template<size_t N>
+    String(CharType (&str)[N]) /* = delete */;
+};
+    
+    namespace internal {
+//        inline String deepcopy(const String& obj, Allocator* allocator) {
+//            const size_t data_size = sizeof(CharType) * obj.size();
+//            CharType* s = static_cast<CharType*>(allocator->malloc(data_size));
+//            std::memcpy(s, obj.data(), obj.size());
+//            
+//            String ret(s, obj.size());
+//            ret.length_ |= String::CopyBitMask;
+//            return ret;
+//        }
+        
+        inline void destroy(String* obj, Allocator* allocator) {
+            if (obj->length_ & String::CopyBitMask) {
+                allocator->free(static_cast<const void*>(obj->data()));
+                obj->length_ = 0;
+                //obj->~String();
+            }
+        }
     }
 
 //! Mark a character pointer as constant string
@@ -179,10 +140,10 @@ private:
 
     \see GenericValue::GenericValue(StringRefType), GenericValue::operator=(StringRefType), GenericValue::SetString(StringRefType), GenericValue::PushBack(StringRefType, Allocator&), GenericValue::AddMember
 */
-template<typename CharType>
-inline GenericString<CharType> String(const CharType* str) {
-    return GenericString<CharType>(str, internal::strLen(str));
-}
+//template<typename CharType>
+//inlineString String(const CharType* str) {
+//    returnString(str, internal::strLen(str));
+//}
 
 //! Mark a character pointer as constant string
 /*! Mark a plain character pointer as a "string literal".  This function
@@ -199,10 +160,10 @@ inline GenericString<CharType> String(const CharType* str) {
     \return GenericString string reference object
     \relatesalso GenericString
 */
-template<typename CharType>
-inline GenericString<CharType> String(const CharType* str, size_t length) {
-    return GenericString<CharType>(str, SizeType(length));
-}
+//template<typename CharType>
+//inlineString String(const CharType* str, size_t length) {
+//    returnString(str, size_t(length));
+//}
 
 #if CSOUP_HAS_STDSTRING
 //! Mark a string object as constant string
@@ -217,10 +178,10 @@ inline GenericString<CharType> String(const CharType* str, size_t length) {
     \relatesalso GenericString
     \note Requires the definition of the preprocessor symbol \ref RAPIDJSON_HAS_STDSTRING.
 */
-template<typename CharType>
-inline GenericString<CharType> String(const std::basic_string<CharType>& str) {
-    return GenericString<CharType>(str.data(), SizeType(str.size()));
-}
+//template<typename CharType>
+//inlineString String(const std::basic_string<CharType>& str) {
+//    returnString(str.data(), size_t(str.size()));
+//}
 #endif
 }
 
