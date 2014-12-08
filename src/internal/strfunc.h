@@ -44,8 +44,9 @@ inline int strCmp(const Ch* sa, const Ch* sb, const size_t len) {
     return std::memcmp(sa, sb, sizeof(Ch) * len);
 }
     
+// Be careful!! This is not an bad implementation!
 inline int strCmpIgnoreCase(const Ch* sa, const Ch* sb, const size_t len) {
-    int i = 0;
+    size_t i = 0;
     while (i < len && std::tolower(sa[i]) == std::tolower(sb[i]))
         i ++;
     
