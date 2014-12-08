@@ -20,6 +20,9 @@
 		045630B31A32E2DD008D89A6 /* gtest.cc in Sources */ = {isa = PBXBuildFile; fileRef = 045630AA1A32E2DD008D89A6 /* gtest.cc */; };
 		045630B41A32E2DD008D89A6 /* gtest_main.cc in Sources */ = {isa = PBXBuildFile; fileRef = 045630AB1A32E2DD008D89A6 /* gtest_main.cc */; };
 		045630BA1A340026008D89A6 /* csoup_string_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630B91A340026008D89A6 /* csoup_string_test.cpp */; };
+		048659381A35CAB100B73500 /* attribute_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 048659371A35CAB100B73500 /* attribute_test.cpp */; };
+		0486593A1A35DFE700B73500 /* attributes_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 048659391A35DFE700B73500 /* attributes_test.cpp */; };
+		0486593C1A35E41A00B73500 /* vector_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0486593B1A35E41A00B73500 /* vector_test.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -88,6 +91,11 @@
 		045630AA1A32E2DD008D89A6 /* gtest.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gtest.cc; sourceTree = "<group>"; };
 		045630AB1A32E2DD008D89A6 /* gtest_main.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gtest_main.cc; sourceTree = "<group>"; };
 		045630B91A340026008D89A6 /* csoup_string_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = csoup_string_test.cpp; sourceTree = "<group>"; };
+		048659371A35CAB100B73500 /* attribute_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = attribute_test.cpp; sourceTree = "<group>"; };
+		048659391A35DFE700B73500 /* attributes_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = attributes_test.cpp; sourceTree = "<group>"; };
+		0486593B1A35E41A00B73500 /* vector_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vector_test.cpp; sourceTree = "<group>"; };
+		0486593D1A35F1D400B73500 /* stringref.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stringref.h; sourceTree = "<group>"; };
+		0486593E1A35FE0500B73500 /* meta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = meta.h; sourceTree = "<group>"; };
 		0499981B1A28CC9D00DCA5BF /* csoup */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = csoup; sourceTree = BUILT_PRODUCTS_DIR; };
 		0499982A1A28CD2F00DCA5BF /* strfunc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = strfunc.h; sourceTree = "<group>"; };
 		0499982F1A28CD2F00DCA5BF /* allocators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = allocators.h; sourceTree = "<group>"; };
@@ -193,6 +201,9 @@
 		045630B81A33FF02008D89A6 /* unittest */ = {
 			isa = PBXGroup;
 			children = (
+				0486593B1A35E41A00B73500 /* vector_test.cpp */,
+				048659391A35DFE700B73500 /* attributes_test.cpp */,
+				048659371A35CAB100B73500 /* attribute_test.cpp */,
 				045630B91A340026008D89A6 /* csoup_string_test.cpp */,
 			);
 			path = unittest;
@@ -239,6 +250,7 @@
 		049998281A28CD2F00DCA5BF /* internal */ = {
 			isa = PBXGroup;
 			children = (
+				0486593E1A35FE0500B73500 /* meta.h */,
 				045630811A30245C008D89A6 /* strfunc.cpp */,
 				045630471A2F5BF4008D89A6 /* list.h */,
 				0456303B1A2EA117008D89A6 /* deepcopy.h */,
@@ -286,6 +298,7 @@
 		0499982E1A28CD2F00DCA5BF /* util */ = {
 			isa = PBXGroup;
 			children = (
+				0486593D1A35F1D400B73500 /* stringref.h */,
 				045630831A3042EF008D89A6 /* csoup_string.cpp */,
 				0456307F1A30039E008D89A6 /* Allocators.cpp */,
 				0499983B1A2C115100DCA5BF /* error.h */,
@@ -356,10 +369,13 @@
 			files = (
 				045630AF1A32E2DD008D89A6 /* gtest-port.cc in Sources */,
 				045630841A3042EF008D89A6 /* csoup_string.cpp in Sources */,
+				0486593C1A35E41A00B73500 /* vector_test.cpp in Sources */,
+				048659381A35CAB100B73500 /* attribute_test.cpp in Sources */,
 				045630B11A32E2DD008D89A6 /* gtest-test-part.cc in Sources */,
 				045630391A2CCFCC008D89A6 /* attribute.cpp in Sources */,
 				045630821A30245C008D89A6 /* strfunc.cpp in Sources */,
 				045630B01A32E2DD008D89A6 /* gtest-printers.cc in Sources */,
+				0486593A1A35DFE700B73500 /* attributes_test.cpp in Sources */,
 				045630B21A32E2DD008D89A6 /* gtest-typed-test.cc in Sources */,
 				045630B31A32E2DD008D89A6 /* gtest.cc in Sources */,
 				045630BA1A340026008D89A6 /* csoup_string_test.cpp in Sources */,

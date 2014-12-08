@@ -12,85 +12,87 @@ namespace csoup {
         CSOUP_ATTR_NAMESPACE_XMLNS,
     } AttributeNamespaceEnum;
     
-    template <typename CharType = char>
-    class GenericAttribute {
+    class Attribute;
+    namespace internal {
+        void destroy(Attribute* obj, Allocator* allocator);
+    }
+    
+    class Attribute {
     public:
-        typedef CharType Ch;
-        
-        GenericAttribute(AttributeNamespaceEnum space,
-                         const GenericString<Ch>& name,
-                         const GenericString<Ch>& value)
-        : attrName_(name), attrValue_(value), attrNamespace_(space) {
-            CSOUP_ASSERT(attrName_.data() != NULL);
+        Attribute(AttributeNamespaceEnum space, const StringRef& key,
+                  const StringRef& value, Allocator* allocator)
+        : attrKey_(key, allocator), attrValue_(value, allocator), attrNamespace_(space) {
+            CSOUP_ASSERT(attrKey_.data() != NULL);
             CSOUP_ASSERT(attrValue_.data() != NULL);
         }
         
-        GenericAttribute(AttributeNamespaceEnum space,
-                         const Ch* name, const Ch* value)
-        : attrName_(String(name)), attrValue_(String(value)), attrNamespace_(space) {
-            CSOUP_ASSERT(name != NULL);
+        Attribute(AttributeNamespaceEnum space, const CharType* key,
+                  const CharType* value, Allocator* allocator)
+        : attrKey_(key, allocator), attrValue_(value, allocator), attrNamespace_(space) {
+            CSOUP_ASSERT(key != NULL);
             CSOUP_ASSERT(value != NULL);
         }
         
-        GenericString<Ch> getName() const {
-            return attrName_;
+        const String& key() const {
+            return attrKey_;
         }
         
-        GenericString<Ch>& getValue() const {
+        const String& value() const {
             return attrValue_;
         }
         
-        AttributeNamespaceEnum getNamespace() const {
+        AttributeNamespaceEnum nameSpace() const {
             return attrNamespace_;
         }
         
-        GenericAttribute<Ch>& setKey(const GenericString<Ch>& key) {
+        Attribute& setKey(const String& key, Allocator* allocator) {
             CSOUP_ASSERT(key.data());
             
-            attrName_.~GenericString<Ch>();
-            new (&attrValue_) GenericString<Ch>(key);
+            internal::destroy(&attrKey_, allocator);
+            attrKey_.~String();
             
+            new (&attrKey_) String(key, allocator);
             return *this;
         }
         
-        GenericAttribute<Ch>& setValue(const GenericString<Ch>& value) {
+        Attribute& setKey(const CharType* key, Allocator* allocator) {
+            return setKey(String(key, allocator), allocator);
+        }
+        
+        Attribute& setValue(const String& value, Allocator* allocator) {
             CSOUP_ASSERT(value.data());
             
-            attrValue_.~GenericString<Ch>();
-            new (&attrValue_) GenericString<Ch>(value);
+            internal::destroy(&attrValue_, allocator);
+            attrValue_.~String();
             
+            new (&attrValue_) String(value, allocator);
             return *this;
         }
         
-        template <typename Allocator>
-        GenericAttribute<Ch> clone(Allocator* allocator) {
-            return GenericAttribute(attrNamespace_,
-                                    attrName_.clone(allocator),
-                                    attrValue_.clone(allocator));
+        Attribute& setValue(const CharType* value, Allocator* allocator) {
+            return setValue(String(value, allocator), allocator);
         }
         
-        template <typename CT, typename Allocator>
-        void destroy(GenericAttribute<CT>* obj, Allocator* allocator);
+//        bool operator == (const Attribute& obj) const {
+//            return attrNamespace_ == obj.attrNamespace_ &&
+//                    attrKey_.equalsIgnoreCase(obj.key()) &&
+//                    attrValue_.equalsIgnoreCase(obj.value());
+//        }
+        
+        friend void internal::destroy(Attribute* obj, Allocator* allocator);
     private:
-        GenericString<Ch> attrName_;
-        GenericString<Ch> attrValue_;
+        Attribute operator = (const Attribute& obj);
+        
+        String attrKey_;
+        String attrValue_;
         AttributeNamespaceEnum attrNamespace_;
     };
-    
-    typedef GenericAttribute<char> Attribute;
-    
-    template <typename CharType, typename Allocator>
-    inline GenericAttribute<CharType> deepcopy(const GenericAttribute<CharType>& obj,
-                                        Allocator* allocator) {
-        return GenericAttribute<CharType>(obj.getNamespace(),
-                                          deepcopy(obj.getName()),
-                                          deepcopy(obj.getValue()));
-    }
-        
-    template <typename CharType, typename Allocator>
-    inline void destroy(GenericAttribute<CharType>* obj, Allocator* allocator) {
-        destroy(&obj->attrName_);
-        destroy(&obj->attrValue_);
+
+    namespace internal {
+        inline void destroy(Attribute* obj, Allocator* allocator) {
+            destroy(&obj->attrKey_, allocator);
+            destroy(&obj->attrValue_, allocator);
+        }
     }
 }
 #endif

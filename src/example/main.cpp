@@ -13,6 +13,8 @@
 #include "../internal/bytearray.h"
 #include "../nodes/attribute.h"
 #include "../util/csoup_string.h"
+#include "../internal/list.h"
+#include "../internal/vector.h"
 
 using std::cout;
 using std::endl;
@@ -30,9 +32,11 @@ public:
 };
 
 int main(int argc, const char * argv[]) {
-    GenericString<char> s("good");
+    String s("good");
+    internal::Vector<int> vec_int;
+    internal::List<int> lst_int(NULL);
     CrtAllocator allo;
-    deepcopy(s, &allo);
+    //deepcopy(s, &allo);
     
     Attribute attr(CSOUP_ATTR_NAMESPACE_NONE, "class", "dream");
     return 0;

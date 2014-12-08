@@ -55,8 +55,9 @@ std::vector<const char*> StringTest::strs_;
 
 TEST_F(StringTest, RawdataTestForPtrOnly)
 {
+    //CrtAllocator allocator;
     for (size_t i = 0; i < strs_.size(); ++i) {
-        String s = String::fromRawData(strs_[i]);
+        StringRef s(strs_[i]);
         EXPECT_EQ(std::strlen(strs_[i]), s.size())
         << "Failure when test length equality: \"" << strs_[i] << "\"";
         
@@ -65,14 +66,17 @@ TEST_F(StringTest, RawdataTestForPtrOnly)
         
         EXPECT_EQ(strs_[i], s.data())
         << "Failure when test string pointer equality: \"" << strs_[i] << "\"";
+        
+        //internal::destroy(&s, &allocator);
     }
 }
 
 TEST_F(StringTest, RawdataTestForPtrAndLength)
 {
+//    CrtAllocator allocator;
     for (size_t i = 0; i < strs_.size(); ++ i) {
         const size_t len = std::strlen(strs_[i]);
-        String s = String::fromRawData(strs_[i], len);
+        StringRef s(strs_[i], len);
 
         EXPECT_EQ(len, s.size())
         << "Failure when test length equality: \"" << strs_[i] << "\"";
@@ -82,16 +86,19 @@ TEST_F(StringTest, RawdataTestForPtrAndLength)
         
         EXPECT_EQ(strs_[i], s.data())
         << "Failure when test string pointer equality: \"" << strs_[i] << "\"";
+        
+        //internal::destroy(&s, &allocator);
     }
 }
 
 
 TEST_F(StringTest, RawdataTestForConstString)
 {
+    //CrtAllocator allocator;
 #define DO_TESTCASE_FOR_CONST_STRING(constStr) \
     {                                                   \
         const size_t strLength = std::strlen(constStr); \
-        String s = String::fromRawData(constStr);\
+        StringRef s(constStr);\
         EXPECT_EQ(strLength, s.size())                      \
             << "Failure when test length equality: \"" << constStr << "\""; \
         EXPECT_STREQ(constStr, s.data())                    \
@@ -114,22 +121,22 @@ TEST_F(StringTest, StringEqualityTest)
         char* buffer = static_cast<char*>(std::malloc(128));
         std::strcpy(buffer, strs_[i]);
         
-        String refStr = String::fromRawData(buffer);
+        StringRef refStr(buffer);
         String copyStr(strs_[i], allocator);
         
-        EXPECT_TRUE(copyStr == refStr);
-        EXPECT_TRUE(refStr == copyStr);
+        EXPECT_TRUE(internal::strEquals(copyStr,refStr));
+        EXPECT_TRUE(internal::strEquals(refStr, copyStr));
         
-        EXPECT_TRUE(copyStr == copyStr);
-        EXPECT_TRUE(refStr ==  refStr);
+        EXPECT_TRUE(internal::strEquals(copyStr, copyStr));
+        EXPECT_TRUE(internal::strEquals(refStr, refStr));
         
         EXPECT_EQ(refStr.data(), buffer);
         
 #define DO_INCASESENSITIVE_STRINGEQUALITY_TEST \
-        EXPECT_TRUE(copyStr.equalsIgnoreCase(refStr)); \
-        EXPECT_TRUE(refStr.equalsIgnoreCase(copyStr)); \
-        EXPECT_TRUE(copyStr.equalsIgnoreCase(copyStr)); \
-        EXPECT_TRUE(refStr.equalsIgnoreCase(copyStr)); \
+        EXPECT_TRUE(internal::strEqualsIgnoreCase(copyStr, refStr)); \
+        EXPECT_TRUE(internal::strEqualsIgnoreCase(refStr, copyStr)); \
+        EXPECT_TRUE(internal::strEqualsIgnoreCase(copyStr, copyStr)); \
+        EXPECT_TRUE(internal::strEqualsIgnoreCase(refStr, refStr)); \
 
         DO_INCASESENSITIVE_STRINGEQUALITY_TEST;
         
@@ -146,16 +153,35 @@ TEST_F(StringTest, StringEqualityTest)
         
         if (refStr.size() > 0) {
             for (size_t i = 0; i < refStr.size(); ++ i) {
-                buffer[i] += (buffcd er[i] >= 127 ? -1 : 1);
+                buffer[i] += (buffer[i] >= 127 ? -1 : 1);
             }
             
-            EXPECT_FALSE(copyStr == refStr);
-            EXPECT_FALSE(refStr == copyStr);
-            EXPECT_TRUE(copyStr == copyStr);
-            EXPECT_TRUE(refStr == refStr);
+            EXPECT_FALSE(internal::strEquals(copyStr, refStr));
+            EXPECT_FALSE(internal::strEquals(refStr, copyStr));
+            EXPECT_TRUE(internal::strEquals(copyStr, copyStr));
+            EXPECT_TRUE(internal::strEquals(refStr, refStr));
         }
         
         internal::destroy(&copyStr, allocator);
         std::free(buffer);
+        
+        // note that, if copyStr is just an empty string, namely "",
+        // then allocator will not do any work.
+        EXPECT_TRUE(copyStr.data() == NULL) << "current string is \""
+                                                                    << copyStr.data() << "\"";
+    }
+    
+    delete allocator;
+}
+
+TEST_F(StringTest, StringInEqualityTest)
+{
+    for (size_t i = 0; i < strs_.size(); ++ i) {
+        StringRef sa(strs_[i]);
+        
+        for (size_t j = i + 1; j < strs_.size(); ++ j) {
+            StringRef sb(strs_[j]);
+            EXPECT_FALSE(internal::strEquals(sa, sb));
+        }
     }
 }

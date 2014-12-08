@@ -255,7 +255,6 @@ using std::size_t;
 
 namespace csoup {
     typedef char CharType;
-    typedef char Ch;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

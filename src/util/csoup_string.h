@@ -4,6 +4,7 @@
 #include <cstring>
 #include "common.h"
 #include "allocators.h"
+#include "stringref.h"
 #include "../internal/strfunc.h"
 
 // NO_EXCEPTION should be reconsidered carefully
@@ -17,19 +18,28 @@ namespace csoup {
 
 class String {
 public:
+    static const int CSOUP_STRING_COMPARE_SUPPORTED = 1;
+    
     template<size_t N>
     String(const CharType (&str)[N], Allocator* allocator) CSOUP_NOEXCEPT
         : data_(NULL), length_(N-1) {
-        CSOUP_ASSERT(length_ <= MaxStringLength);
+        //CSOUP_ASSERT(length_ <= MaxStringLength);
         CSOUP_ASSERT(allocator != NULL);
     
         copyString(str, allocator);
+    }
+    
+    String(const StringRef& str, Allocator* allocator)
+    : data_(NULL), length_(str.size()) {
+        CSOUP_ASSERT(allocator != NULL);
+        //CSOUP_ASSERT(str.data() != NULL);
+        copyString(str.data(), allocator);
     }
 
     explicit String(const CharType* str, Allocator* allocator)
         : data_(NULL), length_(internal::strLen(str)){
             CSOUP_ASSERT(str != NULL);
-            CSOUP_ASSERT(length_ <= MaxStringLength);
+            //CSOUP_ASSERT(length_ <= MaxStringLength);
             CSOUP_ASSERT(allocator != NULL);
             
             copyString(str, allocator);
@@ -38,74 +48,65 @@ public:
     String(const CharType* str, const size_t len, Allocator* allocator)
         : data_(str), length_(len) {
         CSOUP_ASSERT(str != NULL);
-        CSOUP_ASSERT(len <= MaxStringLength);
+        //CSOUP_ASSERT(len <= MaxStringLength);
         CSOUP_ASSERT(allocator != NULL);
             
         copyString(str, allocator);
     }
     
-    static String fromRawData(const CharType* str, const size_t len) CSOUP_NOEXCEPT {
-        return String(str, len);
+    String(const String& str, Allocator* allocator) : data_(NULL), length_(str.size()){
+        // prevent str from a destroied string object
+        CSOUP_ASSERT(str.data() != NULL);
+        CSOUP_ASSERT(allocator != NULL);
+        
+        copyString(str.data(), allocator);
     }
     
-    static String fromRawData(const CharType* str) {
-        return String(str, internal::strLen(str));
-    }
-    
-    template<size_t N>
-    String fromRawData(const CharType (&str)[N]) CSOUP_NOEXCEPT {
-        return String(str, N - 1);
-    }
-    
-    bool operator == (const String& obj) const {
-        return (this == &obj) || (size() == obj.size() && internal::strCmp(this->data_, obj.data_, size()) == 0);
-    }
-    
-    bool equalsIgnoreCase(const String& obj) const {
-        return (this == &obj) || (size() == obj.size() &&
-            internal::strCmpIgnoreCase(this->data_, obj.data_, size()) == 0);
+    StringRef ref() const {
+        return StringRef(data(), size());
     }
 
     //! implicit conversion to plain CharType pointer
-    operator const Ch *() const { return data_; }
+    operator const CharType *() const { return data_; }
     
-    const Ch* data() const {return data_; }
+    const CharType* data() const {return data_; }
     
-    const size_t size() const {return length_ & InvertedCopyBitMask;}
+    const size_t size() const {return length_;}
     
     //friend String deepcopy(const String& obj, Allocator* allocator);
     friend void internal::destroy(String* obj, Allocator* allocator);
 private:
-    static size_t CopyBitMask;
-    static size_t InvertedCopyBitMask;
-    static size_t MaxStringLength;
+//    static size_t CopyBitMask;
+//    static size_t InvertedCopyBitMask;
+//    static size_t MaxStringLength;
     
-    String(const Ch* str, const size_t len) : data_(str), length_(len) {
-        CSOUP_ASSERT(str != NULL);
-        CSOUP_ASSERT(len <= MaxStringLength);
-    }
+//    String(const CharType* str, const size_t len) : data_(str), length_(len) {
+//        CSOUP_ASSERT(str != NULL);
+//        //CSOUP_ASSERT(len <= MaxStringLength);
+//    }
     
-    void copyString(const Ch* str, Allocator* allocator) {
-        size_t buffSize = sizeof(Ch) * length_;
+    void copyString(const CharType* str, Allocator* allocator) {
+        size_t buffSize = sizeof(CharType) * length_;
         if (buffSize == 0) {
             data_ = "";
         } else {
-            Ch* buffer = static_cast<Ch*>(allocator->malloc(buffSize));
-            length_ |= CopyBitMask;
-        
+            CharType* buffer = static_cast<CharType*>(allocator->malloc(buffSize));
             std::memcpy(buffer, str, buffSize);
             data_ = buffer;
         }
     }
     
-    const Ch* data_; //!< plain CharType pointer
+    const CharType* data_; //!< plain CharType pointer
     size_t length_; //!< length of the string (excluding the trailing NULL terminator)
     
+    bool operator == (const String&);
     //! Disallow copy-assignment
     String operator=(const String&);
     //! Disallow construction from non-const array
     template<size_t N>
     String(CharType (&str)[N]) /* = delete */;
+    
+    String(const String& obj);
 };
     
     namespace internal {
@@ -119,12 +120,15 @@ private:
 //            return ret;
 //        }
         
+        // this method only  guarantees that all memory resources would
+        // be freed. Don't think that
         inline void destroy(String* obj, Allocator* allocator) {
-            if (obj->length_ & String::CopyBitMask) {
+            if (obj->data_ && obj->data_[0] != '\0') {
                 allocator->free(static_cast<const void*>(obj->data()));
-                obj->length_ = 0;
-                //obj->~String();
             }
+            
+            obj->length_ = 0;
+            obj->data_ = NULL;
         }
     }
 

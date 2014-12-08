@@ -96,6 +96,24 @@ concept Allocator {
         return NULL;
     }
     
+    
+    class DumbAllocator : public Allocator {
+    public:
+        DumbAllocator() : Allocator(false) {}
+
+        void* malloc(size_t size) { return NULL; }
+        void* realloc(void* originalPtr, size_t originalSize, size_t newSize) {
+            (void)originalSize;
+            return NULL;
+        }
+        void free(const void *ptr) { (void)ptr; }
+    };
+    
+    inline DumbAllocator* globalDumbAllocator() {
+        static DumbAllocator GlobalDumbAllocator;
+        return &GlobalDumbAllocator;
+    }
+    
 ///////////////////////////////////////////////////////////////////////////////
 // CrtAllocator
 

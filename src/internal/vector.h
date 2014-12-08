@@ -1,6 +1,7 @@
 #ifndef CSOUP_INTERNAL_VECTOR_H_
 #define CSOUP_INTERNAL_VECTOR_H_
-#include "bytearray.h"
+
+#include "../util/allocators.h"
 
 namespace csoup {
     namespace internal {
@@ -30,27 +31,25 @@ namespace csoup {
             }
             
             void clear() {
-                if (0 != vectorSize_) {
-                    T* p = static_cast<T*>(stack_);
-                    for (size_t i = 0; i < vectorSize_; i ++, p ++) {
-                        p->~T();
-                    }
+                for (T* p = stack_; p != stackTop_; p ++) {
+                    p->~T();
                 }
 
-                stack_ = stackTop_ = stackEnd_ = 0;
-                vectorSize_ = 0;
+                stackTop_ = stack_;
             }
             
             void shrinkToFit() {
                 if (empty()) {
                     // If the stack is empty, completely deallocate the memory.
-                    Allocator::free(stack_);
+                    clear();
+                    
+                    allocator_->free(stack_);
                     stack_ = 0;
                     stackTop_ = 0;
                     stackEnd_ = 0;
                 }
                 else
-                    resize(sizeof(T) * getSize());
+                    resize(size());
             }
             
             // Optimization note: try to minimize the size of this function for force inline.
@@ -82,51 +81,51 @@ namespace csoup {
             }
             
             T* at(size_t i) {
-                CSOUP_ASSERT(i < getSize());
+                CSOUP_ASSERT(i < size());
                 return stack_ + i;
             }
             
             const T* at(size_t i) const {
-                CSOUP_ASSERT(i < getSize());
+                CSOUP_ASSERT(i < size());
                 return stack_ + i;
             }
             
             void reserve(size_t n) {
-                if (n > getSize()) ensureExtraSize(n - getSize());
+                if (n > size()) ensureExtraSize(n - size());
             }
             
             void remove(size_t index) {
-                CSOUP_ASSERT(index < getSize());
+                CSOUP_ASSERT(index < size());
                 at(index)->~T();
                 std::memmove(stack_ + index, stack_ + index + 1,
-                             sizeof(T) * (getSize() - index - 1));
+                             sizeof(T) * (size() - index - 1));
                 --stackTop_;
             }
             
             void insert(size_t index, const T& obj) {
-                if (index > getSize()) index = getSize();
+                if (index > size()) index = size();
                 ensureExtraSize(1);
                 std::memmove(stack_ + index + 1, stack_ + index,
-                             sizeof(T) * (getSize() - index));
+                             sizeof(T) * (size() - index));
                 new (stack_ + index) T(obj);
 
                 ++ stackTop_;
             }
             
             T* insert(size_t index) {
-                if (index > getSize()) index = getSize();
+                if (index > size()) index = size();
                 ensureExtraSize(1);
                 std::memmove(stack_ + index + 1, stack_ + index,
-                             sizeof(T) * (getSize() - index));
+                             sizeof(T) * (size() - index));
                 
                 ++ stackTop_;
                 return stack_ + index;
             }
             
             //Allocator& getAllocator() { return *allocator_; }
-            size_t getSize() const { return stackTop_ - stack_; }
-            size_t getCapacity() const { return (stackEnd_ - stack_); }
-            bool empty() const { return getSize() == 0; }
+            size_t size() const { return stackTop_ - stack_; }
+            size_t capacity() const { return (stackEnd_ - stack_); }
+            bool empty() const { return size() == 0; }
             
         private:
             // Prohibit copy constructor & assignment operator.
@@ -135,8 +134,8 @@ namespace csoup {
             
             void ensureExtraSize(size_t count) {
                 // Expand the stack if needed
-                if (stackTop_ + byteCount >= stackEnd_)
-                    expand(byteCount);
+                if (stackTop_ + count >= stackEnd_)
+                    expand(count + size() - capacity());
             }
             
             void expand(size_t count) {
@@ -145,10 +144,10 @@ namespace csoup {
                 if (stack_ == 0)
                     newCapacity = initialCapacity_;
                 else {
-                    newCapacity = getCapacity();
+                    newCapacity = capacity();
                     newCapacity += (newCapacity + 1) / 2;
                 }
-                size_t newSize = getSize() + byteCount;
+                size_t newSize = size() + count;
                 if (newCapacity < newSize)
                     newCapacity = newSize;
                 
@@ -156,11 +155,11 @@ namespace csoup {
             }
             
             void resize(size_t count) {
-                const size_t size = getSize();  // Backup the current size
+                const size_t oriSize = size();  // Backup the current size
                 
-                stack_ = (T*)allocator_->realloc(stack_, getCapacity() * sizeof(T),
+                stack_ = (T*)allocator_->realloc(stack_, capacity() * sizeof(T),
                                                         count * sizeof(T));
-                stackTop_ = stack_ + size;
+                stackTop_ = stack_ + oriSize;
                 stackEnd_ = stack_ + count;
             }
             
