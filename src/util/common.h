@@ -244,7 +244,7 @@ namespace csoup {
     instead of using \c size_t. Users may override the SizeType by defining
     \ref CSOUP_NO_SIZETYPEDEFINE.
 */
-typedef unsigned SizeType;
+//typedef unsigned SizeType;
 } // namespace csoup
 #endif
 
@@ -252,6 +252,11 @@ typedef unsigned SizeType;
 namespace csoup {
 using std::size_t;
 } // namespace csoup
+
+namespace csoup {
+    typedef char CharType;
+    typedef char Ch;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSOUP_ASSERT
