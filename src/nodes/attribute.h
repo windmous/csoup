@@ -12,10 +12,10 @@ namespace csoup {
         CSOUP_ATTR_NAMESPACE_XMLNS,
     } AttributeNamespaceEnum;
     
-    class Attribute;
-    namespace internal {
-        void destroy(Attribute* obj, Allocator* allocator);
-    }
+//    class Attribute;
+//    namespace internal {
+//        void destroy(Attribute* obj, Allocator* allocator);
+//    }
     
     class Attribute {
     public:
@@ -48,7 +48,7 @@ namespace csoup {
         Attribute& setKey(const String& key, Allocator* allocator) {
             CSOUP_ASSERT(key.data());
             
-            internal::destroy(&attrKey_, allocator);
+            //internal::destroy(&attrKey_, allocator);
             attrKey_.~String();
             
             new (&attrKey_) String(key, allocator);
@@ -62,7 +62,7 @@ namespace csoup {
         Attribute& setValue(const String& value, Allocator* allocator) {
             CSOUP_ASSERT(value.data());
             
-            internal::destroy(&attrValue_, allocator);
+            //internal::destroy(&attrValue_, allocator);
             attrValue_.~String();
             
             new (&attrValue_) String(value, allocator);
@@ -79,7 +79,7 @@ namespace csoup {
 //                    attrValue_.equalsIgnoreCase(obj.value());
 //        }
         
-        friend void internal::destroy(Attribute* obj, Allocator* allocator);
+//        friend void internal::destroy(Attribute* obj, Allocator* allocator);
     private:
         Attribute operator = (const Attribute& obj);
         
@@ -88,11 +88,11 @@ namespace csoup {
         AttributeNamespaceEnum attrNamespace_;
     };
 
-    namespace internal {
-        inline void destroy(Attribute* obj, Allocator* allocator) {
-            destroy(&obj->attrKey_, allocator);
-            destroy(&obj->attrValue_, allocator);
-        }
-    }
+//    namespace internal {
+//        inline void destroy(Attribute* obj, Allocator* allocator) {
+//            destroy(&obj->attrKey_, allocator);
+//            destroy(&obj->attrValue_, allocator);
+//        }
+//    }
 }
 #endif
