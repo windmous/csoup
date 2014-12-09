@@ -22,7 +22,7 @@ public:
     
     template<size_t N>
     String(const CharType (&str)[N], Allocator* allocator) CSOUP_NOEXCEPT
-        : data_(NULL), length_(N-1) {
+        : data_(NULL), length_(N-1), allocator_(allocator) {
         //CSOUP_ASSERT(length_ <= MaxStringLength);
         CSOUP_ASSERT(allocator != NULL);
     
@@ -30,14 +30,14 @@ public:
     }
     
     String(const StringRef& str, Allocator* allocator)
-    : data_(NULL), length_(str.size()) {
+    : data_(NULL), length_(str.size()), allocator_(allocator) {
         CSOUP_ASSERT(allocator != NULL);
         //CSOUP_ASSERT(str.data() != NULL);
         copyString(str.data(), allocator);
     }
 
     explicit String(const CharType* str, Allocator* allocator)
-        : data_(NULL), length_(internal::strLen(str)){
+        : data_(NULL), length_(internal::strLen(str)), allocator_(allocator){
             CSOUP_ASSERT(str != NULL);
             //CSOUP_ASSERT(length_ <= MaxStringLength);
             CSOUP_ASSERT(allocator != NULL);
@@ -46,7 +46,7 @@ public:
     }
 
     String(const CharType* str, const size_t len, Allocator* allocator)
-        : data_(str), length_(len) {
+        : data_(str), length_(len), allocator_(allocator) {
         CSOUP_ASSERT(str != NULL);
         //CSOUP_ASSERT(len <= MaxStringLength);
         CSOUP_ASSERT(allocator != NULL);
@@ -54,7 +54,8 @@ public:
         copyString(str, allocator);
     }
     
-    String(const String& str, Allocator* allocator) : data_(NULL), length_(str.size()){
+    String(const String& str, Allocator* allocator) :
+        data_(NULL), length_(str.size()), allocator_(allocator) {
         // prevent str from a destroied string object
         CSOUP_ASSERT(str.data() != NULL);
         CSOUP_ASSERT(allocator != NULL);
@@ -62,9 +63,16 @@ public:
         copyString(str.data(), allocator);
     }
     
+    ~String() {
+        if (!allocator_) return ;
+        allocator_->free(data_);
+        allocator_ = NULL;
+    }
+    
     StringRef ref() const {
         return StringRef(data(), size());
     }
+    
 
     //! implicit conversion to plain CharType pointer
     operator const CharType *() const { return data_; }
@@ -98,6 +106,7 @@ private:
     
     const CharType* data_; //!< plain CharType pointer
     size_t length_; //!< length of the string (excluding the trailing NULL terminator)
+    Allocator* allocator_;
     
     bool operator == (const String&);
     //! Disallow copy-assignment
@@ -123,12 +132,12 @@ private:
         // this method only  guarantees that all memory resources would
         // be freed. Don't think that
         inline void destroy(String* obj, Allocator* allocator) {
-            if (obj->data_ && obj->data_[0] != '\0') {
-                allocator->free(static_cast<const void*>(obj->data()));
-            }
-            
-            obj->length_ = 0;
-            obj->data_ = NULL;
+//            if (obj->data_ && obj->data_[0] != '\0') {
+//                allocator->free(static_cast<const void*>(obj->data()));
+//            }
+//            
+//            obj->length_ = 0;
+//            obj->data_ = NULL;
         }
     }
 
