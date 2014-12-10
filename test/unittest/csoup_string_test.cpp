@@ -167,8 +167,8 @@ TEST_F(StringTest, StringEqualityTest)
         
         // note that, if copyStr is just an empty string, namely "",
         // then allocator will not do any work.
-        EXPECT_TRUE(copyStr.data() == NULL) << "current string is \""
-                                                                    << copyStr.data() << "\"";
+        //EXPECT_TRUE(copyStr.data() == NULL) << "current string is \""
+        //                                                            << copyStr.data() << "\"";
     }
     
     delete allocator;

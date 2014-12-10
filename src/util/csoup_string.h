@@ -81,6 +81,10 @@ public:
     
     const size_t size() const {return length_;}
     
+    operator StringRef () const {
+        return StringRef(data(), size());
+    }
+    
     //friend String deepcopy(const String& obj, Allocator* allocator);
     friend void internal::destroy(String* obj, Allocator* allocator);
 private:

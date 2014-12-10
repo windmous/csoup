@@ -23,6 +23,8 @@
 		048659381A35CAB100B73500 /* attribute_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 048659371A35CAB100B73500 /* attribute_test.cpp */; };
 		0486593A1A35DFE700B73500 /* attributes_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 048659391A35DFE700B73500 /* attributes_test.cpp */; };
 		0486593C1A35E41A00B73500 /* vector_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0486593B1A35E41A00B73500 /* vector_test.cpp */; };
+		048659421A3745F500B73500 /* tag.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 048659411A3745F500B73500 /* tag.cpp */; };
+		048659451A37E06A00B73500 /* element_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 048659441A37E06A00B73500 /* element_test.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -49,7 +51,6 @@
 		045630401A2F526B008D89A6 /* element.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = element.h; sourceTree = "<group>"; };
 		045630411A2F526B008D89A6 /* entities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = entities.h; sourceTree = "<group>"; };
 		045630421A2F526B008D89A6 /* formelement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = formelement.h; sourceTree = "<group>"; };
-		045630431A2F526B008D89A6 /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		045630441A2F526B008D89A6 /* textnode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textnode.h; sourceTree = "<group>"; };
 		045630451A2F526B008D89A6 /* xmldeclaration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xmldeclaration.h; sourceTree = "<group>"; };
 		045630461A2F585B008D89A6 /* attributes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = attributes.h; sourceTree = "<group>"; };
@@ -96,6 +97,11 @@
 		0486593B1A35E41A00B73500 /* vector_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vector_test.cpp; sourceTree = "<group>"; };
 		0486593D1A35F1D400B73500 /* stringref.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stringref.h; sourceTree = "<group>"; };
 		0486593E1A35FE0500B73500 /* meta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = meta.h; sourceTree = "<group>"; };
+		048659401A37454C00B73500 /* tag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tag.h; sourceTree = "<group>"; };
+		048659411A3745F500B73500 /* tag.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tag.cpp; sourceTree = "<group>"; };
+		048659431A374DD800B73500 /* nodedata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nodedata.h; sourceTree = "<group>"; };
+		048659441A37E06A00B73500 /* element_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = element_test.cpp; sourceTree = "<group>"; };
+		048659461A37EA3600B73500 /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		0499981B1A28CC9D00DCA5BF /* csoup */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = csoup; sourceTree = BUILT_PRODUCTS_DIR; };
 		0499982A1A28CD2F00DCA5BF /* strfunc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = strfunc.h; sourceTree = "<group>"; };
 		0499982F1A28CD2F00DCA5BF /* allocators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = allocators.h; sourceTree = "<group>"; };
@@ -201,6 +207,7 @@
 		045630B81A33FF02008D89A6 /* unittest */ = {
 			isa = PBXGroup;
 			children = (
+				048659441A37E06A00B73500 /* element_test.cpp */,
 				0486593B1A35E41A00B73500 /* vector_test.cpp */,
 				048659391A35DFE700B73500 /* attributes_test.cpp */,
 				048659371A35CAB100B73500 /* attribute_test.cpp */,
@@ -250,6 +257,7 @@
 		049998281A28CD2F00DCA5BF /* internal */ = {
 			isa = PBXGroup;
 			children = (
+				048659431A374DD800B73500 /* nodedata.h */,
 				0486593E1A35FE0500B73500 /* meta.h */,
 				045630811A30245C008D89A6 /* strfunc.cpp */,
 				045630471A2F5BF4008D89A6 /* list.h */,
@@ -264,6 +272,9 @@
 		0499982B1A28CD2F00DCA5BF /* nodes */ = {
 			isa = PBXGroup;
 			children = (
+				048659461A37EA3600B73500 /* node.h */,
+				048659411A3745F500B73500 /* tag.cpp */,
+				048659401A37454C00B73500 /* tag.h */,
 				045630461A2F585B008D89A6 /* attributes.h */,
 				0456303C1A2F526B008D89A6 /* comment.h */,
 				0456303D1A2F526B008D89A6 /* datanode.h */,
@@ -272,7 +283,6 @@
 				045630401A2F526B008D89A6 /* element.h */,
 				045630411A2F526B008D89A6 /* entities.h */,
 				045630421A2F526B008D89A6 /* formelement.h */,
-				045630431A2F526B008D89A6 /* node.h */,
 				045630441A2F526B008D89A6 /* textnode.h */,
 				045630451A2F526B008D89A6 /* xmldeclaration.h */,
 				045630371A2CCFCC008D89A6 /* attribute.cpp */,
@@ -376,10 +386,12 @@
 				045630821A30245C008D89A6 /* strfunc.cpp in Sources */,
 				045630B01A32E2DD008D89A6 /* gtest-printers.cc in Sources */,
 				0486593A1A35DFE700B73500 /* attributes_test.cpp in Sources */,
+				048659421A3745F500B73500 /* tag.cpp in Sources */,
 				045630B21A32E2DD008D89A6 /* gtest-typed-test.cc in Sources */,
 				045630B31A32E2DD008D89A6 /* gtest.cc in Sources */,
 				045630BA1A340026008D89A6 /* csoup_string_test.cpp in Sources */,
 				045630801A30039E008D89A6 /* Allocators.cpp in Sources */,
+				048659451A37E06A00B73500 /* element_test.cpp in Sources */,
 				045630B41A32E2DD008D89A6 /* gtest_main.cc in Sources */,
 				045630AD1A32E2DD008D89A6 /* gtest-death-test.cc in Sources */,
 				045630AE1A32E2DD008D89A6 /* gtest-filepath.cc in Sources */,

@@ -18,16 +18,14 @@ namespace csoup {
             // Optimization note: Do not allocate memory for vector_ in constructor.
             // Do it lazily when first Push() -> Expand() -> Resize().
             Vector(Allocator* allocator = NULL, size_t vectorCapacity = 1) :
-                                    allocator_(allocator), ownAllocator(0), stack_(0),stackTop_(0), stackEnd_(0), initialCapacity_(vectorCapacity) {
+                                    allocator_(allocator), stack_(0),stackTop_(0), stackEnd_(0), initialCapacity_(vectorCapacity) {
                 CSOUP_ASSERT(vectorCapacity > 0);
-                if (!allocator_)
-                    ownAllocator = allocator_ = new CrtAllocator();
+                CSOUP_ASSERT(allocator_ != NULL);
             }
             
             ~Vector() {
                 clear();
                 allocator_->free(stack_);
-                delete ownAllocator; // Only delete if it is owned by the stack
             }
             
             void clear() {
@@ -122,6 +120,20 @@ namespace csoup {
                 return stack_ + index;
             }
             
+            const T* base() const {
+                CSOUP_ASSERT(!empty());
+                return stack_;
+            }
+            
+            T* base() {
+                CSOUP_ASSERT(!empty());
+                return stack_;
+            }
+            
+            Allocator* allocator() {
+                return allocator_;
+            }
+            
             //Allocator& getAllocator() { return *allocator_; }
             size_t size() const { return stackTop_ - stack_; }
             size_t capacity() const { return (stackEnd_ - stack_); }
@@ -164,13 +176,11 @@ namespace csoup {
             }
             
             Allocator* allocator_;
-            Allocator* ownAllocator;
             T *stack_;
             T *stackTop_;
             T *stackEnd_;
             size_t initialCapacity_;
         };
-        
     } // namespace internal
 } // namespace rapidjson
 

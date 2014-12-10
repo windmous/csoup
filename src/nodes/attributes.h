@@ -42,7 +42,7 @@ namespace csoup {
             return get(CSOUP_ATTR_NAMESPACE_NONE, key);
         }
         
-        void remove(AttributeNamespaceEnum space, const StringRef& key) {
+        void removeAttribute(AttributeNamespaceEnum space, const StringRef& key) {
             if (!attributes_ || !key.size()) return ;
             
             for (size_t i = 0; i < attributes_->size(); ++ i) {
@@ -53,8 +53,8 @@ namespace csoup {
             }
         }
         
-        void remove(const StringRef& key) {
-            return remove(CSOUP_ATTR_NAMESPACE_NONE, key);
+        void removeAttribute(const StringRef& key) {
+            return removeAttribute(CSOUP_ATTR_NAMESPACE_NONE, key);
         }
         
         bool addAttribute(AttributeNamespaceEnum space, const StringRef& key,
@@ -73,6 +73,7 @@ namespace csoup {
         bool addAttribute(const StringRef& key,const StringRef& value) {
             return addAttribute(CSOUP_ATTR_NAMESPACE_NONE, key, value);
         }
+
         
         bool hasAttribute(AttributeNamespaceEnum space, const StringRef& key) const {
             if (!key.size() || !attributes_) return false;
