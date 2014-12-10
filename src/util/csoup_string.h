@@ -85,6 +85,14 @@ public:
         return StringRef(data(), size());
     }
     
+    static void destroyString(String** str, Allocator* allocator) {
+        if (*str != NULL) {
+            (*str)->~String();
+            allocator->free(*str);
+            *str = NULL;
+        }
+    }
+    
     //friend String deepcopy(const String& obj, Allocator* allocator);
     friend void internal::destroy(String* obj, Allocator* allocator);
 private:

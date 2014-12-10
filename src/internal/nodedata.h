@@ -20,9 +20,9 @@ namespace csoup {
         /** CDATA node. v will be a GumboText. */
         CSOUP_NODE_CDATA,
         /** Comment node.  v. will be a GumboText, excluding comment delimiters. */
-        CSOUP_NODE_COMMENT,
+        CSOUP_NODE_COMMENT//,
         /** Text node, where all contents is whitespace.  v will be a GumboText. */
-        CSOUP_NODE_WHITESPACE
+        //CSOUP_NODE_WHITESPACE
     } NodeTypeEnum;
     
     typedef enum {
@@ -48,16 +48,16 @@ namespace csoup {
             Vector<Node>* childNodes_;
         };
         
-        struct DocumentData {
-            QuirksModeEnum quirksMode_;
-            String* publicIdentifier_;
-            String* systemIdentifier_;
-            String* name_;
-            bool hasDocType_;
-            
-            Vector<Node>* childNodes_;
-            // You may add some options
-        };
+//        struct DocumentData {
+//            QuirksModeEnum quirksMode_;
+//            String* publicIdentifier_;
+//            String* systemIdentifier_;
+//            String* name_;
+//            bool hasDocType_;
+//            
+//            Vector<Node>* childNodes_;
+//            // You may add some options
+//        };
         
         struct NodeData {
             NodeData(NodeTypeEnum type, Node* parent, size_t index, Allocator* allocator) :
@@ -72,7 +72,7 @@ namespace csoup {
             
             Allocator* allocator_;
             union {
-                DocumentData doc_;
+                //DocumentData doc_;
                 ElementData element_;
                 TextNodeData text_;
             } v_;

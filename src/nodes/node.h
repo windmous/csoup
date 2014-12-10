@@ -48,13 +48,13 @@ namespace csoup {
             return data_.v_.element_;
         }
 
-        internal::DocumentData& document() {
-            return data_.v_.doc_;
-        }
-        
-        const internal::DocumentData& document() const {
-            return data_.v_.doc_;
-        }
+//        internal::DocumentData& document() {
+//            return data_.v_.doc_;
+//        }
+//        
+//        const internal::DocumentData& document() const {
+//            return data_.v_.doc_;
+//        }
         
         internal::TextNodeData& text() {
             return data_.v_.text_;
@@ -68,12 +68,19 @@ namespace csoup {
             data_.siblingIndex_ = index;
         }
         
+        void setParentNode(Node* parent) {
+            CSOUP_ASSERT(parent != NULL &&
+                (parent->type() == CSOUP_NODE_ELEMENT || parent->type() == CSOUP_NODE_DOCUMENT));
+            CSOUP_ASSERT(parentNode() == NULL);
+            data_.parent_ = parent;
+        }
+        
         friend class Element;
     private:
         internal::NodeData data_;
     };
     
-    Node::~Node() {
+    inline Node::~Node() {
     }
 }
 

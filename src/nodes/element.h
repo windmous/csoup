@@ -4,6 +4,9 @@
 #include "../internal/nodedata.h"
 #include "attributes.h"
 #include "node.h"
+#include "textnode.h"
+#include "datanode.h"
+#include "comment.h"
 #include "tag.h"
 
 namespace csoup {
@@ -136,12 +139,6 @@ namespace csoup {
             *node = NULL;
         }
         
-        // to be conitnued;
-        Node* addChild(size_t index, NodeTypeEnum type) {
-            Node* ret = ensureChildNodes()->insert(index);
-            reindexChildren();
-            return ret;
-        }
         
         ///////////////////////////////////////////////
         // !!!!!!!!!!!!!!!!
@@ -173,9 +170,71 @@ namespace csoup {
             return countOfChildren;
         }
         
-        //void addChild(Node* node)
+        Element* createElement(size_t index, TagNamespaceEnum space, TagEnum tag, Attributes* attributes) {
+            Element* ret = static_cast<Element*>(addChild(index));
+            new (ret) Element(space, tag, attributes, allocator());
+            ret->setParentNode(this);
+            
+            reindexChildren(index);
+            return ret;
+        }
         
+        Element* appendElement(TagNamespaceEnum space, TagEnum tag, Attributes* attributes) {
+            Element* ret = static_cast<Element*>(appendChild());
+            new (ret) Element(space, tag, attributes, allocator());
+            ret->setParentNode(this);
+            
+            ret->setSiblingIndex(childNodeSize() - 1);
+            return ret;
+        }
+        
+#define CREATE_TEXT_BASED_NODE_METHOD(NodeTypeName) \
+    NodeTypeName* create##NodeTypeName(size_t index, const StringRef& text) {\
+        NodeTypeName* ret = static_cast<NodeTypeName*>(addChild(index)); \
+        new (ret) NodeTypeName(text, allocator()); \
+        ret->setParentNode(this); \
+        reindexChildren(index); \
+        return ret; \
+    } \
+    \
+    NodeTypeName* create##NodeTypeName(size_t index) { \
+        NodeTypeName* ret = static_cast<NodeTypeName*>(addChild(index)); \
+        new (ret) NodeTypeName(allocator()); \
+        ret->setParentNode(this); \
+        reindexChildren(index); \
+        return ret; \
+    } \
+    \
+    NodeTypeName* append##NodeTypeName(size_t index, const StringRef& text) { \
+        NodeTypeName* ret = static_cast<NodeTypeName*>(appendChild()); \
+        new (ret) NodeTypeName(text, allocator()); \
+        ret->setParentNode(this); \
+        ret->setSiblingIndex(childNodeSize() - 1); \
+        return ret; \
+    } \
+    \
+    NodeTypeName* append##NodeTypeName(size_t index) { \
+        NodeTypeName* ret = static_cast<NodeTypeName*>(appendChild()); \
+        new (ret) NodeTypeName(allocator()); \
+        ret->setParentNode(this); \
+        ret->setSiblingIndex(childNodeSize() - 1); \
+        return ret; \
+    } \
+
+    CREATE_TEXT_BASED_NODE_METHOD(TextNode)
+    CREATE_TEXT_BASED_NODE_METHOD(DataNode)
+    CREATE_TEXT_BASED_NODE_METHOD(Comment)
+
     private:
+        // to be conitnued;
+        Node* addChild(size_t index) {
+            return ensureChildNodes()->insert(index);
+        }
+        
+        Node* appendChild() {
+            return ensureChildNodes()->push();
+        }
+        
         Attributes* ensureAttributes() {
             if (!element().attributes_) {
                 element().attributes_ = allocator()->malloc_t<Attributes>();
