@@ -22,51 +22,36 @@ public:
     
     template<size_t N>
     String(const CharType (&str)[N], Allocator* allocator) CSOUP_NOEXCEPT
-        : data_(NULL), length_(N-1), allocator_(allocator) {
-        //CSOUP_ASSERT(length_ <= MaxStringLength);
-        CSOUP_ASSERT(allocator != NULL);
-    
-        copyString(str, allocator);
+    : type_(CSOUP_UNDEFINED_STRING) {
+        
+        copyString(str, N - 1, allocator);
     }
     
     String(const StringRef& str, Allocator* allocator)
-    : data_(NULL), length_(str.size()), allocator_(allocator) {
-        CSOUP_ASSERT(allocator != NULL);
-        //CSOUP_ASSERT(str.data() != NULL);
-        copyString(str.data(), allocator);
+    : type_(CSOUP_UNDEFINED_STRING) {
+        copyString(str, str.size(), allocator);
     }
 
     explicit String(const CharType* str, Allocator* allocator)
-        : data_(NULL), length_(internal::strLen(str)), allocator_(allocator){
-            CSOUP_ASSERT(str != NULL);
-            //CSOUP_ASSERT(length_ <= MaxStringLength);
-            CSOUP_ASSERT(allocator != NULL);
-            
-            copyString(str, allocator);
+    : type_(CSOUP_UNDEFINED_STRING) {
+        copyString(str, internal::strLen(str), allocator);
     }
 
     String(const CharType* str, const size_t len, Allocator* allocator)
-        : data_(str), length_(len), allocator_(allocator) {
-        CSOUP_ASSERT(str != NULL);
-        //CSOUP_ASSERT(len <= MaxStringLength);
-        CSOUP_ASSERT(allocator != NULL);
-            
-        copyString(str, allocator);
+    : type_(CSOUP_UNDEFINED_STRING) {
+        copyString(str, len, allocator);
     }
     
     String(const String& str, Allocator* allocator) :
-        data_(NULL), length_(str.size()), allocator_(allocator) {
-        // prevent str from a destroied string object
-        CSOUP_ASSERT(str.data() != NULL);
-        CSOUP_ASSERT(allocator != NULL);
-        
-        copyString(str.data(), allocator);
+        type_(CSOUP_UNDEFINED_STRING) {
+        copyString(str.data(), str.size(), allocator);
     }
     
     ~String() {
-        if (!allocator_) return ;
-        allocator_->free(data_);
-        allocator_ = NULL;
+        if (type_ == CSOUP_LONG_STRING) {
+            data_.ls_.allocator_->free(data_.ls_.str_);
+            type_ = CSOUP_UNDEFINED_STRING;
+        }
     }
     
     StringRef ref() const {
@@ -75,50 +60,94 @@ public:
     
 
     //! implicit conversion to plain CharType pointer
-    operator const CharType *() const { return data_; }
+    operator const CharType *() const {
+        return data();
+    }
     
-    const CharType* data() const {return data_; }
+    const CharType* data() const {
+        CSOUP_ASSERT(type_ != CSOUP_UNDEFINED_STRING);
+        return type_ == CSOUP_SHORT_STRING ? data_.ss_.str_ : data_.ls_.str_;
+    }
     
-    const size_t size() const {return length_;}
+    const size_t size() const {
+        CSOUP_ASSERT(type_ != CSOUP_UNDEFINED_STRING);
+        return type_ == CSOUP_SHORT_STRING ? data_.ss_.length() : data_.ls_.length_;
+    }
     
     operator StringRef () const {
         return StringRef(data(), size());
     }
     
-    static void destroyString(String** str, Allocator* allocator) {
-        if (*str != NULL) {
-            (*str)->~String();
-            allocator->free(*str);
-            *str = NULL;
-        }
+    static void destroyString(String** strPtr, Allocator* allocator) {
+        if (*strPtr == NULL) return ;
+        
+        (*strPtr)->~String();
+        allocator->free(*strPtr);
+        *strPtr = NULL;
     }
+
     
-    //friend String deepcopy(const String& obj, Allocator* allocator);
-    friend void internal::destroy(String* obj, Allocator* allocator);
+    // friend String deepcopy(const String& obj, Allocator* allocator);
+    // friend void internal::destroy(String* obj, Allocator* allocator);
 private:
 //    static size_t CopyBitMask;
 //    static size_t InvertedCopyBitMask;
 //    static size_t MaxStringLength;
     
-//    String(const CharType* str, const size_t len) : data_(str), length_(len) {
-//        CSOUP_ASSERT(str != NULL);
-//        //CSOUP_ASSERT(len <= MaxStringLength);
-//    }
+    void copyString(const CharType* str, size_t len, Allocator* allocator) {
+        CSOUP_ASSERT(str        != NULL);
+        CSOUP_ASSERT(allocator  != NULL);
+        
+        if (ShortString::usable(len))   copyShortString(str, len);
+        else                            copyLongString(str, len, allocator);
+    }
     
-    void copyString(const CharType* str, Allocator* allocator) {
-        size_t buffSize = sizeof(CharType) * length_;
+    void copyShortString(const CharType* str, size_t len) {
+        type_                   = CSOUP_SHORT_STRING;
+        size_t buffSize         = sizeof(CharType) * len;
+        std::memcpy(data_.ss_.str_, str, buffSize);
+        data_.ss_.setLength(len);
+    }
+    
+    
+    void copyLongString(const CharType* str, size_t len, Allocator* allocator) {
+        type_                   = CSOUP_LONG_STRING;
+        data_.ls_.length_       = len;
+        data_.ls_.allocator_    = allocator;
+        size_t buffSize         = sizeof(CharType) * len;
+        
         if (buffSize == 0) {
-            data_ = "";
+            data_.ls_.str_ = "";
         } else {
             CharType* buffer = static_cast<CharType*>(allocator->malloc(buffSize));
             std::memcpy(buffer, str, buffSize);
-            data_ = buffer;
+            data_.ls_.str_ = buffer;
         }
     }
     
-    const CharType* data_; //!< plain CharType pointer
-    size_t length_; //!< length of the string (excluding the trailing NULL terminator)
-    Allocator* allocator_;
+    enum StringTypeEnum { CSOUP_SHORT_STRING, CSOUP_LONG_STRING, CSOUP_UNDEFINED_STRING};
+    
+    struct LongString {
+        const CharType* str_; //!< plain CharType pointer
+        size_t length_; //!< length of the string (excluding the trailing NULL terminator)
+        Allocator* allocator_;
+    };
+    
+    struct ShortString {
+        enum { MaxChars = sizeof(LongString) / sizeof(CharType), MaxSize = MaxChars - 1, LenPos = MaxSize };
+        CharType str_[MaxChars];
+        
+        inline static bool usable(size_t len) { return (MaxSize >= len); }
+        inline void     setLength(size_t len) { str_[LenPos] = (CharType)(MaxSize - len); }
+        inline size_t length() const          { return (CharType)(MaxSize - str_[LenPos]); }
+    };
+    
+    union {
+        struct LongString  ls_;
+        struct ShortString ss_;
+    } data_;
+    
+    StringTypeEnum type_;
     
     bool operator == (const String&);
     //! Disallow copy-assignment
