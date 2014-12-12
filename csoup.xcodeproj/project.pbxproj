@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		040308EA1A39833200DC7297 /* stringbuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308E81A39833200DC7297 /* stringbuffer.cpp */; };
+		040308F01A3A04EB00DC7297 /* characterreader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308EE1A3A04EB00DC7297 /* characterreader.cpp */; };
+		040308F31A3AA94400DC7297 /* token.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308F11A3AA94400DC7297 /* token.cpp */; };
 		045630391A2CCFCC008D89A6 /* attribute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630371A2CCFCC008D89A6 /* attribute.cpp */; };
 		045630801A30039E008D89A6 /* Allocators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0456307F1A30039E008D89A6 /* Allocators.cpp */; };
 		045630821A30245C008D89A6 /* strfunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630811A30245C008D89A6 /* strfunc.cpp */; };
@@ -44,6 +47,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		040308E81A39833200DC7297 /* stringbuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stringbuffer.cpp; sourceTree = "<group>"; };
+		040308E91A39833200DC7297 /* stringbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stringbuffer.h; sourceTree = "<group>"; };
+		040308EE1A3A04EB00DC7297 /* characterreader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = characterreader.cpp; sourceTree = "<group>"; };
+		040308EF1A3A04EB00DC7297 /* characterreader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = characterreader.h; sourceTree = "<group>"; };
+		040308F11A3AA94400DC7297 /* token.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = token.cpp; sourceTree = "<group>"; };
+		040308F21A3AA94400DC7297 /* token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = token.h; sourceTree = "<group>"; };
+		040308F41A3ADD2300DC7297 /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
 		045630371A2CCFCC008D89A6 /* attribute.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = attribute.cpp; sourceTree = "<group>"; };
 		045630381A2CCFCC008D89A6 /* attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = attribute.h; sourceTree = "<group>"; };
 		0456303A1A2E29AB008D89A6 /* csoup_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = csoup_string.h; sourceTree = "<group>"; };
@@ -306,6 +316,10 @@
 		0499982C1A28CD2F00DCA5BF /* parser */ = {
 			isa = PBXGroup;
 			children = (
+				040308EE1A3A04EB00DC7297 /* characterreader.cpp */,
+				040308EF1A3A04EB00DC7297 /* characterreader.h */,
+				040308F11A3AA94400DC7297 /* token.cpp */,
+				040308F21A3AA94400DC7297 /* token.h */,
 			);
 			path = parser;
 			sourceTree = "<group>";
@@ -329,6 +343,9 @@
 				049998311A28CD2F00DCA5BF /* encodings.h */,
 				0456303A1A2E29AB008D89A6 /* csoup_string.h */,
 				049998331A28CD2F00DCA5BF /* stringstream.h */,
+				040308E81A39833200DC7297 /* stringbuffer.cpp */,
+				040308E91A39833200DC7297 /* stringbuffer.h */,
+				040308F41A3ADD2300DC7297 /* util.h */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -393,6 +410,7 @@
 				045630841A3042EF008D89A6 /* csoup_string.cpp in Sources */,
 				0486593C1A35E41A00B73500 /* vector_test.cpp in Sources */,
 				048659481A387D0C00B73500 /* datanode_test.cpp in Sources */,
+				040308F31A3AA94400DC7297 /* token.cpp in Sources */,
 				048659501A388A0F00B73500 /* textnode_test.cpp in Sources */,
 				048659381A35CAB100B73500 /* attribute_test.cpp in Sources */,
 				045630B11A32E2DD008D89A6 /* gtest-test-part.cc in Sources */,
@@ -407,7 +425,9 @@
 				045630B31A32E2DD008D89A6 /* gtest.cc in Sources */,
 				045630BA1A340026008D89A6 /* csoup_string_test.cpp in Sources */,
 				045630801A30039E008D89A6 /* Allocators.cpp in Sources */,
+				040308EA1A39833200DC7297 /* stringbuffer.cpp in Sources */,
 				048659451A37E06A00B73500 /* element_test.cpp in Sources */,
+				040308F01A3A04EB00DC7297 /* characterreader.cpp in Sources */,
 				045630B41A32E2DD008D89A6 /* gtest_main.cc in Sources */,
 				045630AD1A32E2DD008D89A6 /* gtest-death-test.cc in Sources */,
 				045630AE1A32E2DD008D89A6 /* gtest-filepath.cc in Sources */,

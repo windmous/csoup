@@ -94,6 +94,9 @@ namespace csoup {
             return attributes_ == NULL ? 0 : attributes_->size();
         }
         
+        Allocator* allocator() {
+            return allocator_;
+        }
         //friend void internal::destroy(Attributes* attributes, Allocator* allocator);
     private:
         static bool isAttributeHasKey(const Attribute* attr,

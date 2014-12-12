@@ -47,7 +47,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "103"
             endingLineNumber = "103"
-            landmarkName = "removeChild(size_t index)"
+            landmarkName = "hasAttribute(const StringRef&amp; key)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
