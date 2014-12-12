@@ -97,9 +97,9 @@ concept Allocator {
     }
     
     
-    class DumbAllocator : public Allocator {
+    class StumpAllocator : public Allocator {
     public:
-        DumbAllocator() : Allocator(false) {}
+        StumpAllocator() : Allocator(false) {}
 
         void* malloc(size_t size) { return NULL; }
         void* realloc(void* originalPtr, size_t originalSize, size_t newSize) {
@@ -109,8 +109,8 @@ concept Allocator {
         void free(const void *ptr) { (void)ptr; }
     };
     
-    inline DumbAllocator* globalDumbAllocator() {
-        static DumbAllocator GlobalDumbAllocator;
+    inline StumpAllocator* globalDumbAllocator() {
+        static StumpAllocator GlobalDumbAllocator;
         return &GlobalDumbAllocator;
     }
     

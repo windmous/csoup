@@ -47,6 +47,7 @@
 
 #include <cstdlib>  // malloc(), realloc(), free(), size_t
 #include <cstring>  // memset(), memcpy(), memmove(), memcmp()
+#include <new>
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSOUP_NO_INT64DEFINE
@@ -403,6 +404,28 @@ template<int x> struct StaticAssertTest {};
 #endif
 
 //!@endcond
+namespace csoup {
+    ///////////////////////////////////////////////////////////////////////////////
+    // Utility functions
+    template <typename Allocator, typename T>
+    void destroy(T** ptr, Allocator* allocator) {
+        if (*ptr == NULL) return;
+        (*ptr)->~T();
+        allocator->free(*ptr);
+        *ptr = NULL;
+    }
+    
+    template <typename T>
+    void destroy(T** ptr) {
+        if (*ptr == NULL) return;
+        
+        typename T::AllocatorType* allocator = (*ptr)->allocator();
+        (*ptr)->~T();
+        allocator->free(*ptr);
+        *ptr = NULL;
+    }
+
+}
 
 
 

@@ -17,6 +17,8 @@
 namespace csoup {
     class StringBuffer {
     public:
+        typedef Allocator AllocatorType;
+        
         StringBuffer(Allocator* allocator)
         : str_(NULL), allocator_(allocator), capacity_(0), length_(0) {
             CSOUP_ASSERT(allocator != NULL);
@@ -68,6 +70,9 @@ namespace csoup {
             appendString(str.data(), str.size());
         }
         
+        Allocator* allocator() {
+            return allocator_;
+        }
     private:
         void ensureExtraSize(size_t extraSize);
         

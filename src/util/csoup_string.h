@@ -18,6 +18,7 @@ namespace csoup {
 
 class String {
 public:
+    typedef Allocator AllocatorType;
     static const int CSOUP_STRING_COMPARE_SUPPORTED = 1;
     
     template<size_t N>
@@ -77,15 +78,12 @@ public:
     operator StringRef () const {
         return StringRef(data(), size());
     }
-    
-    static void destroyString(String** strPtr, Allocator* allocator) {
-        if (*strPtr == NULL) return ;
-        
-        (*strPtr)->~String();
-        allocator->free(*strPtr);
-        *strPtr = NULL;
-    }
 
+    Allocator* allocator() {
+        CSOUP_ASSERT(type_ != CSOUP_UNDEFINED_STRING);
+        if (type_ == CSOUP_SHORT_STRING)    return globalDumbAllocator();
+        else                                return data_.ls_.allocator_;
+    }
     
     // friend String deepcopy(const String& obj, Allocator* allocator);
     // friend void internal::destroy(String* obj, Allocator* allocator);
@@ -108,7 +106,6 @@ private:
         std::memcpy(data_.ss_.str_, str, buffSize);
         data_.ss_.setLength(len);
     }
-    
     
     void copyLongString(const CharType* str, size_t len, Allocator* allocator) {
         type_                   = CSOUP_LONG_STRING;
