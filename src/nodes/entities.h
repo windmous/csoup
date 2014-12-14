@@ -8,6 +8,7 @@ namespace csoup {
     class Allocator;
     
     class Entities {
+    public:
         static bool isNamedEntity(const StringRef& name, Allocator* allocator);
         
         static bool isNamedEntity(const CharType* name);

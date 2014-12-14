@@ -70,6 +70,9 @@ namespace csoup {
             appendString(str.data(), str.size());
         }
         
+        void tolower();
+        void toupper();
+        
         Allocator* allocator() {
             return allocator_;
         }

@@ -34,6 +34,11 @@ namespace csoup {
             CSOUP_ASSERT(str.data() != NULL);
         }
         
+        CharType at(size_t index) const {
+            CSOUP_ASSERT(index < size());
+            return data_[index];
+        }
+        
         //! implicit conversion to plain CharType pointer
         operator const CharType *() const { return data_; }
         

@@ -73,6 +73,14 @@ namespace csoup {
             return name_->ref();
         }
         
+        void appendName(const StringRef& str) {
+            name_->appendString(str);
+        }
+        
+        void appendName(const int c) {
+            name_->append(c);
+        }
+        
         StringRef publicIdentifier() const {
             return publicIdentifier_->ref();
         }
@@ -81,8 +89,28 @@ namespace csoup {
             return systemIdentifier_->ref();
         }
         
+        void appendPublicIdentifier(const StringRef& str) {
+            publicIdentifier_->appendString(str);
+        }
+        
+        void appendPublicIdentifier(const int c) {
+            publicIdentifier_->append(c);
+        }
+        
+        void appendSystemIdentifier(const StringRef& str) {
+            name_->appendString(str);
+        }
+
+        void appendSystemIdentifier(const int c) {
+            name_->append(c);
+        }
+        
         bool forceQuirks() const {
             return forceQuirks_;
+        }
+        
+        void setForceQuirks(bool flag) {
+            forceQuirks_ = flag;
         }
     private:
         StringBuffer* name_;
@@ -135,11 +163,15 @@ namespace csoup {
             return selfClosing_;
         }
         
+        void setSelfClosing() {
+            selfClosing_ = true;
+        }
+        
         Attributes* attributes() {
             return attributes_;
         }
         
-    protected:
+    //protected:
         void newAttribute() {
             ensureAttributes();
             
@@ -271,6 +303,10 @@ namespace csoup {
         
         bool bogus() const {
             return bogus_;
+        }
+        
+        void setBogus(bool flag) {
+            bogus_ = flag;
         }
     private:
         bool bogus_;

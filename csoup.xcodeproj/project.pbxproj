@@ -10,6 +10,11 @@
 		040308EA1A39833200DC7297 /* stringbuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308E81A39833200DC7297 /* stringbuffer.cpp */; };
 		040308F01A3A04EB00DC7297 /* characterreader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308EE1A3A04EB00DC7297 /* characterreader.cpp */; };
 		040308F31A3AA94400DC7297 /* token.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308F11A3AA94400DC7297 /* token.cpp */; };
+		040308F71A3B2BDD00DC7297 /* parseerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308F51A3B2BDD00DC7297 /* parseerror.cpp */; };
+		040308FA1A3B2E8800DC7297 /* parseerrorlist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308F81A3B2E8800DC7297 /* parseerrorlist.cpp */; };
+		040308FD1A3C5D2E00DC7297 /* tokeniser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308FB1A3C5D2E00DC7297 /* tokeniser.cpp */; };
+		040309001A3C5D4400DC7297 /* tokeniserstate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308FE1A3C5D4400DC7297 /* tokeniserstate.cpp */; };
+		040309041A3CA36200DC7297 /* entities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040309031A3CA36200DC7297 /* entities.cpp */; };
 		045630391A2CCFCC008D89A6 /* attribute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630371A2CCFCC008D89A6 /* attribute.cpp */; };
 		045630801A30039E008D89A6 /* Allocators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0456307F1A30039E008D89A6 /* Allocators.cpp */; };
 		045630821A30245C008D89A6 /* strfunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630811A30245C008D89A6 /* strfunc.cpp */; };
@@ -54,6 +59,15 @@
 		040308F11A3AA94400DC7297 /* token.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = token.cpp; sourceTree = "<group>"; };
 		040308F21A3AA94400DC7297 /* token.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = token.h; sourceTree = "<group>"; };
 		040308F41A3ADD2300DC7297 /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		040308F51A3B2BDD00DC7297 /* parseerror.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = parseerror.cpp; sourceTree = "<group>"; };
+		040308F61A3B2BDD00DC7297 /* parseerror.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parseerror.h; sourceTree = "<group>"; };
+		040308F81A3B2E8800DC7297 /* parseerrorlist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = parseerrorlist.cpp; sourceTree = "<group>"; };
+		040308F91A3B2E8800DC7297 /* parseerrorlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parseerrorlist.h; sourceTree = "<group>"; };
+		040308FB1A3C5D2E00DC7297 /* tokeniser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tokeniser.cpp; sourceTree = "<group>"; };
+		040308FC1A3C5D2E00DC7297 /* tokeniser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tokeniser.h; sourceTree = "<group>"; };
+		040308FE1A3C5D4400DC7297 /* tokeniserstate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tokeniserstate.cpp; sourceTree = "<group>"; };
+		040308FF1A3C5D4400DC7297 /* tokeniserstate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tokeniserstate.h; sourceTree = "<group>"; };
+		040309031A3CA36200DC7297 /* entities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = entities.cpp; sourceTree = "<group>"; };
 		045630371A2CCFCC008D89A6 /* attribute.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = attribute.cpp; sourceTree = "<group>"; };
 		045630381A2CCFCC008D89A6 /* attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = attribute.h; sourceTree = "<group>"; };
 		0456303A1A2E29AB008D89A6 /* csoup_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = csoup_string.h; sourceTree = "<group>"; };
@@ -294,6 +308,7 @@
 		0499982B1A28CD2F00DCA5BF /* nodes */ = {
 			isa = PBXGroup;
 			children = (
+				040309031A3CA36200DC7297 /* entities.cpp */,
 				048659461A37EA3600B73500 /* node.h */,
 				048659411A3745F500B73500 /* tag.cpp */,
 				048659401A37454C00B73500 /* tag.h */,
@@ -320,6 +335,14 @@
 				040308EF1A3A04EB00DC7297 /* characterreader.h */,
 				040308F11A3AA94400DC7297 /* token.cpp */,
 				040308F21A3AA94400DC7297 /* token.h */,
+				040308F51A3B2BDD00DC7297 /* parseerror.cpp */,
+				040308F61A3B2BDD00DC7297 /* parseerror.h */,
+				040308F81A3B2E8800DC7297 /* parseerrorlist.cpp */,
+				040308F91A3B2E8800DC7297 /* parseerrorlist.h */,
+				040308FB1A3C5D2E00DC7297 /* tokeniser.cpp */,
+				040308FC1A3C5D2E00DC7297 /* tokeniser.h */,
+				040308FE1A3C5D4400DC7297 /* tokeniserstate.cpp */,
+				040308FF1A3C5D4400DC7297 /* tokeniserstate.h */,
 			);
 			path = parser;
 			sourceTree = "<group>";
@@ -406,16 +429,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				040308FA1A3B2E8800DC7297 /* parseerrorlist.cpp in Sources */,
 				045630AF1A32E2DD008D89A6 /* gtest-port.cc in Sources */,
 				045630841A3042EF008D89A6 /* csoup_string.cpp in Sources */,
 				0486593C1A35E41A00B73500 /* vector_test.cpp in Sources */,
 				048659481A387D0C00B73500 /* datanode_test.cpp in Sources */,
+				040309041A3CA36200DC7297 /* entities.cpp in Sources */,
+				040309001A3C5D4400DC7297 /* tokeniserstate.cpp in Sources */,
 				040308F31A3AA94400DC7297 /* token.cpp in Sources */,
+				040308FD1A3C5D2E00DC7297 /* tokeniser.cpp in Sources */,
 				048659501A388A0F00B73500 /* textnode_test.cpp in Sources */,
 				048659381A35CAB100B73500 /* attribute_test.cpp in Sources */,
 				045630B11A32E2DD008D89A6 /* gtest-test-part.cc in Sources */,
 				045630391A2CCFCC008D89A6 /* attribute.cpp in Sources */,
 				045630821A30245C008D89A6 /* strfunc.cpp in Sources */,
+				040308F71A3B2BDD00DC7297 /* parseerror.cpp in Sources */,
 				0486594F1A388A0F00B73500 /* document_test.cpp in Sources */,
 				045630B01A32E2DD008D89A6 /* gtest-printers.cc in Sources */,
 				0486593A1A35DFE700B73500 /* attributes_test.cpp in Sources */,

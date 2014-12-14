@@ -17,7 +17,7 @@ namespace csoup {
         public:
             // Optimization note: Do not allocate memory for vector_ in constructor.
             // Do it lazily when first Push() -> Expand() -> Resize().
-            Vector(Allocator* allocator = NULL, size_t vectorCapacity = 1) :
+            Vector(size_t vectorCapacity = 1, Allocator* allocator = NULL) :
                                     allocator_(allocator), stack_(0),stackTop_(0), stackEnd_(0), initialCapacity_(vectorCapacity) {
                 CSOUP_ASSERT(vectorCapacity > 0);
                 CSOUP_ASSERT(allocator_ != NULL);

@@ -50,4 +50,16 @@ namespace csoup {
             str_[length_++] = 0x80 | (0x3f & (c >> (i * 6)));
         }
     }
+    
+    void StringBuffer::tolower() {
+        for (size_t i = 0; i < length_; ++ i) {
+            str_[i] = std::tolower(str_[i]);
+        }
+    }
+    
+    void StringBuffer::toupper() {
+        for (size_t i = 0; i < length_; ++ i) {
+            str_[i] = std::toupper(str_[i]);
+        }
+    }
 }

@@ -6,8 +6,10 @@
 //  Copyright (c) 2014 windpls. All rights reserved.
 //
 
-#include "characterreader.h"
 #include <iostream>
+
+#include "characterreader.h"
+#include "stringbuffer.h"
 
 namespace {
     const int kUtf8ReplacementChar = 0xFFFD;
@@ -116,5 +118,61 @@ namespace csoup {
         width_ = end_ - start_;
         std::cout << "UTF8 decoding error: TRUNCATED" << std::endl;
         //add_error(iter, GUMBO_ERR_UTF8_TRUNCATED);
+    }
+    
+    void CharacterReader::consumeTo(const csoup::StringRef &term, csoup::StringBuffer *output) {
+        size_t offset = nextIndexOf(term);
+        if (start_ + offset < end_) {
+            StringRef data(cur_, offset - pos());
+            output->appendString(data);
+            cur_ = start_ + offset;
+            
+            readChar();
+        } else {
+            consumeToEnd(output);
+        }
+    }
+    
+    void CharacterReader::consumeToEnd(csoup::StringBuffer *output) {
+        while (!empty()) {
+            output->append(next());
+        }
+    }
+    
+    // need to be re-implemented
+    size_t CharacterReader::nextIndexOf(int c) {
+        CSOUP_ASSERT(c <= 127 && c >= 0);
+        
+        const CharType* p = cur_;
+        
+        while (p < end_ && *p != c) {
+            p ++;
+        }
+        
+        return p - start_;
+    }
+    
+    size_t CharacterReader::nextIndexOf(const csoup::StringRef &seq) {
+        CSOUP_ASSERT(seq.size() > 0);
+        
+        if (seq.size() == 1) {
+            return nextIndexOf(seq.at(0));
+        }
+        
+        int startCode = seq.at(0);
+        for (const CharType* p = cur_; p < end_; ++ p) {
+            if (startCode != *p) {
+                while (p < end_ && startCode != *p) ++ p;
+            }
+            
+            const CharType* p2 = p + 1;
+            const CharType* last = (p2 + seq.size()) - 1;
+            if (p2 < end_ && last <= end_) {
+                for (size_t i = 1; p2 < last && *p2 == seq.at(i); ++ p2, ++ i);
+                if (p2 == end_) return p - start_;
+            }
+        }
+        
+        return end_ - start_;
     }
 }

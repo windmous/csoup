@@ -403,6 +403,8 @@ template<int x> struct StaticAssertTest {};
 #define CSOUP_HAS_CXX11_TYPETRAITS 0
 #endif
 
+//#define CSOUP_ARRAY_LENGTH(ArrayName) (sizeof(ArrayName) / sizeof(*ArrayName))
+
 //!@endcond
 namespace csoup {
     ///////////////////////////////////////////////////////////////////////////////
@@ -425,6 +427,10 @@ namespace csoup {
         *ptr = NULL;
     }
 
+    template <typename T, size_t N>
+    size_t arrayLength(T (&arr)[N]) {
+        return N;
+    }
 }
 
 
