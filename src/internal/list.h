@@ -2,9 +2,15 @@
 #define CSOUP_INTERNAL_LIST_H_
 
 #include "../util/common.h"
+#include "../util/allocators.h"
 
 namespace csoup {
     namespace internal {
+        
+        template <typename T>
+        class ListIterator;
+        
+        // In this implementation, the first node contains data
         template <typename T>
         class List {
         public:
@@ -77,7 +83,6 @@ namespace csoup {
                 return ret;
             }
             
-            
             void remove(size_t index) {
                 CSOUP_ASSERT(index < size_);
                 
@@ -110,6 +115,15 @@ namespace csoup {
                 listHead_ = listTail_ = 0;
             }
             
+            ListIterator<T> iterator(size_t index) {
+                return ListIterator<T>(at(index));
+            }
+            
+            ListIterator<T> begin() {
+                return ListIterator<T>(listHead_);
+            }
+            
+            friend class ListIterator<T>;
         private:
             struct ListNode {
                 ListNode() : data_(0), next_(0), prev_(0) {
@@ -181,6 +195,48 @@ namespace csoup {
             ListNode *listHead_;
             ListNode *listTail_;
             size_t size_;
+        };
+        
+        template <class T>
+        class ListIterator {
+            typedef typename List<T>::ListNode ListNode;
+            
+            bool hasNext() const {
+                return pos_ != NULL && pos_->next_ != NULL;
+            }
+            
+            void next() {
+                CSOUP_ASSERT(hasNext());
+                pos_ = pos_->next_;
+            }
+            
+            bool hasPrevious() const {
+                return pos_ != NULL && pos_->prev_ != NULL;
+            }
+            
+            void previous() {
+                CSOUP_ASSERT(hasPrevious());
+                pos_ = pos_->prev_;
+            }
+            
+            T* data() {
+                CSOUP_ASSERT(pos_ != NULL);
+                return pos_->data_;
+            }
+            
+            const T* data() const {
+                CSOUP_ASSERT(pos_ != NULL);
+                return pos_->data_;
+            }
+            
+            bool valid() const {
+                return pos_ != NULL;
+            }
+            
+        private:
+            ListIterator(ListNode* p) : pos_(p) {}
+            
+            ListNode* pos_;
         };
     }
 }
