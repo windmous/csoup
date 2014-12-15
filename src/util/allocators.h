@@ -80,7 +80,17 @@ concept Allocator {
         template <typename T>
         T* realloc_t(T* ptr, size_t oriSize, size_t newSize) {
             return static_cast<T*>(realloc(ptr, oriSize, newSize));
-        }        
+        }
+        
+        template <typename T>
+        void deconstructAndFree(T* res) {
+            if (*res == NULL) {
+                return ;
+            }
+            
+            res->~T();
+            free(res);
+        }
     private:
         bool flagNeedFree_;
     };

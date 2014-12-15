@@ -7,11 +7,6 @@
 #include "attribute.h"
 
 namespace csoup {
-    namespace internal {
-        class Attributes;
-        void destroy(Attributes* attributes, Allocator* allocator);
-    }
-    
     class Attributes {
     public:
         Attributes(Allocator* allocator) : allocator_(allocator),
@@ -108,14 +103,6 @@ namespace csoup {
         Allocator* allocator_;
         internal::Vector<Attribute>* attributes_;
     };
-    
-    
-//    namespace internal {
-//        void destroy(Attributes* attributes, Allocator* allocator) {
-//            attributes->~Attributes();
-//        }
-//    }
-
 }
 
 #endif // CSOUP_ATTRIBUTES_H_

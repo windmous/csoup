@@ -7,3 +7,11 @@
 //
 
 #include "parseerrorlist.h"
+
+namespace csoup {
+    ParseErrorList::ParseErrorList(size_t maxSize, Allocator* allocator)  :
+    maxSize_(maxSize),
+    errorList_(maxSize > INITIAL_CAPACITY ? INITIAL_CAPACITY : maxSize, allocator) {
+        
+    }
+}

@@ -21,7 +21,7 @@ namespace csoup {
     const int TokeniserState::nullChar_         = 0x0000;
     const int TokeniserState::replacementChar_  = Tokeniser::replacementChar_;
 //    const CharType* TokeniserState::replacementStr_   = "\uFD\uFF";
-    const int TokeniserState::eof_              = CharacterReader::EOF;
+    const int TokeniserState::eof_              = CharacterReader::eof_;
     
     void TokeniserState::handleDataEndTag(csoup::Tokeniser *t, csoup::CharacterReader *r, csoup::internal::TokeniserState *elseTransition) {
         if (isalpha(r->peek())) {
@@ -106,7 +106,7 @@ namespace csoup {
         int c = reader->peek();
         size_t read = 0;
         
-        while (c != CharacterReader::EOF) {
+        while (c != CharacterReader::eof_) {
             for (size_t i = 0; i < arrSize; ++ i) {
                 if (c == endTerms[i]) {
                     goto EMIT_UNTIL_OUTER;
@@ -126,7 +126,7 @@ namespace csoup {
         int c = reader->peek();
         size_t read = 0;
         
-        while (c != CharacterReader::EOF) {
+        while (c != CharacterReader::eof_) {
             for (size_t i = 0; i < arrSize; ++ i) {
                 if (c == endTerms[i]) {
                     goto LOWERCASED_APPEND_UNTIL;
@@ -172,7 +172,7 @@ namespace csoup {
         int c = reader->peek();
         size_t read = 0;
         
-        while (c != CharacterReader::EOF) {
+        while (c != CharacterReader::eof_) {
             for (size_t i = 0; i < arrSize; ++ i) {
                 if (c == endTerms[i]) {
                     goto APPEND_UNTIL_OUTER;
@@ -1942,7 +1942,6 @@ namespace csoup {
         t->emit(data.ref());
         reader->matchConsume("]]>");
         t->transition(Data::instance());
-        
     }
 }
 

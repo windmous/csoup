@@ -247,7 +247,7 @@ namespace csoup {
         internal::Vector<Node>* ensureChildNodes() {
             if (!element().childNodes_) {
                 element().childNodes_ = allocator()->malloc_t< internal::Vector<Node> >();
-                new (element().childNodes_) internal::Vector<Node>(allocator(), 4);
+                new (element().childNodes_) internal::Vector<Node>(4, allocator());
             }
             
             return element().childNodes_;

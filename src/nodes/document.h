@@ -1,36 +1,13 @@
 #ifndef CSOUP_DOCUMENT_H_
 #define CSOUP_DOCUMENT_H_
 
-#include "node.h"
 #include "element.h"
-#include "../util/allocators.h"
 
 namespace csoup {
     class Document : public Element {
     public:
-        Document(Allocator* allocator = NULL) :
-                    Element(CSOUP_NAMESPACE_HTML,
-                            CSOUP_TAG_HTML,
-                            NULL,allocator ? allocator : new MemoryPoolAllocator()),
-                    quirksMode_(CSOUP_DOCTYPE_NO_QUIRKS),
-                    ownAllocator_(NULL),
-                    publicIdentifier_(NULL),
-                    systemIdentifier_(NULL),
-                    name_(NULL) {
-            if (allocator == NULL) {
-                ownAllocator_ = Element::allocator();
-            }
-        }
-
-        ~Document() {
-            String::destroyString(&publicIdentifier_, allocator());
-            String::destroyString(&systemIdentifier_, allocator());
-            String::destroyString(&name_, allocator());
-
-            if (ownAllocator_) {
-                delete ownAllocator_;
-            }
-        }
+        Document(const StringRef& baseUri, Allocator* allocator = NULL);
+        ~Document();
         
         Element* head() {
             return NULL;
@@ -46,6 +23,10 @@ namespace csoup {
         
         void setTitle(const StringRef& newTitle) {
             
+        }
+        
+        StringRef baseUri() const {
+            return baseUri_->ref();
         }
         
         // createElement
@@ -72,6 +53,7 @@ namespace csoup {
         String* publicIdentifier_;
         String* systemIdentifier_;
         String* name_;
+        String* baseUri_;
         bool hasDocType_;
         
         Allocator* ownAllocator_;

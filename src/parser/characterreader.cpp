@@ -16,7 +16,7 @@ namespace {
     #define UTF8_ACCEPT 0
     #define UTF8_REJECT 12
 
-    static const uint8_t utf8d[] = {
+    const uint8_t utf8d[] = {
         // The first part of the table maps bytes to character classes that
         // to reduce the size of the transition table and create bitmasks.
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -38,7 +38,7 @@ namespace {
     };
     
     
-    uint32_t static inline decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
+    uint32_t inline decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
         uint32_t type = utf8d[byte];
         
         *codep = (*state != UTF8_ACCEPT) ?
@@ -54,7 +54,6 @@ namespace {
         (c >= 0x7F && c <= 0x9F) || (c >= 0xFDD0 && c <= 0xFDEF) ||
         ((c & 0xFFFF) == 0xFFFE) || ((c & 0xFFFF) == 0xFFFF);
     }
-    
 }
 
 namespace csoup {

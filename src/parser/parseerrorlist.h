@@ -15,11 +15,7 @@
 namespace csoup {
     class ParseErrorList {
     public:
-        ParseErrorList(size_t maxSize, Allocator* allocator) :
-                maxSize_(maxSize),
-                errorList_(maxSize > INITIAL_CAPACITY ? INITIAL_CAPACITY : maxSize, allocator) {
-            CSOUP_ASSERT(allocator != NULL);
-        }
+        ParseErrorList(size_t maxSize, Allocator* allocator = NULL);
         
         bool notFull() const {
             return errorList_.size() < maxSize_;
@@ -27,6 +23,10 @@ namespace csoup {
         
         size_t maxSize() const {
             return maxSize_;
+        }
+        
+        Allocator* allocator() {
+            return errorList_.allocator();
         }
         
         ParseError* appendError() {
