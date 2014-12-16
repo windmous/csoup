@@ -29,7 +29,7 @@ namespace csoup {
     class TreeBuilder {
     public:
         TreeBuilder();
-        ~TreeBuilder();
+        virtual ~TreeBuilder();
         
         // errors should never be NULL
         Document* parse(const StringRef& input, const StringRef& baseUri, ParseErrorList* errors, Allocator* allocator) {

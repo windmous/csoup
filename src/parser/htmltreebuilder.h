@@ -9,6 +9,16 @@
 #ifndef CSOUP_HTML_TREEBUILDER_H_
 #define CSOUP_HTML_TREEBUILDER_H_
 
-#include <stdio.h>
+#include "treebuilder.h"
+
+namespace csoup {
+    class HtmlTreeBuilder : public TreeBuilder {
+    public:
+        HtmlTreeBuilder();
+        
+    protected:
+        bool process(Token* token);
+    };
+}
 
 #endif // CSOUP_HTML_TREEBUILDER_H_

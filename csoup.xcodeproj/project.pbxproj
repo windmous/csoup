@@ -15,6 +15,13 @@
 		040308FD1A3C5D2E00DC7297 /* tokeniser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308FB1A3C5D2E00DC7297 /* tokeniser.cpp */; };
 		040309001A3C5D4400DC7297 /* tokeniserstate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040308FE1A3C5D4400DC7297 /* tokeniserstate.cpp */; };
 		040309041A3CA36200DC7297 /* entities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 040309031A3CA36200DC7297 /* entities.cpp */; };
+		042A62491A3EF520006E8B43 /* treebuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A62471A3EF51F006E8B43 /* treebuilder.cpp */; };
+		042A624C1A3EF53C006E8B43 /* htmltreebuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A624A1A3EF53C006E8B43 /* htmltreebuilder.cpp */; };
+		042A624F1A3EF555006E8B43 /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A624D1A3EF555006E8B43 /* parser.cpp */; };
+		042A62521A3EF572006E8B43 /* queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A62501A3EF572006E8B43 /* queue.cpp */; };
+		042A62541A3F0822006E8B43 /* list_test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A62531A3F0822006E8B43 /* list_test.cpp */; };
+		042A62561A3F1A9D006E8B43 /* document.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A62551A3F1A9D006E8B43 /* document.cpp */; };
+		042A62591A3F330C006E8B43 /* htmltreebuilderstate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 042A62571A3F330C006E8B43 /* htmltreebuilderstate.cpp */; };
 		045630391A2CCFCC008D89A6 /* attribute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630371A2CCFCC008D89A6 /* attribute.cpp */; };
 		045630801A30039E008D89A6 /* Allocators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0456307F1A30039E008D89A6 /* Allocators.cpp */; };
 		045630821A30245C008D89A6 /* strfunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045630811A30245C008D89A6 /* strfunc.cpp */; };
@@ -68,6 +75,18 @@
 		040308FE1A3C5D4400DC7297 /* tokeniserstate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tokeniserstate.cpp; sourceTree = "<group>"; };
 		040308FF1A3C5D4400DC7297 /* tokeniserstate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tokeniserstate.h; sourceTree = "<group>"; };
 		040309031A3CA36200DC7297 /* entities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = entities.cpp; sourceTree = "<group>"; };
+		042A62471A3EF51F006E8B43 /* treebuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = treebuilder.cpp; sourceTree = "<group>"; };
+		042A62481A3EF51F006E8B43 /* treebuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = treebuilder.h; sourceTree = "<group>"; };
+		042A624A1A3EF53C006E8B43 /* htmltreebuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = htmltreebuilder.cpp; sourceTree = "<group>"; };
+		042A624B1A3EF53C006E8B43 /* htmltreebuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = htmltreebuilder.h; sourceTree = "<group>"; };
+		042A624D1A3EF555006E8B43 /* parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = parser.cpp; sourceTree = "<group>"; };
+		042A624E1A3EF555006E8B43 /* parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parser.h; sourceTree = "<group>"; };
+		042A62501A3EF572006E8B43 /* queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = queue.cpp; sourceTree = "<group>"; };
+		042A62511A3EF572006E8B43 /* queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = queue.h; sourceTree = "<group>"; };
+		042A62531A3F0822006E8B43 /* list_test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = list_test.cpp; sourceTree = "<group>"; };
+		042A62551A3F1A9D006E8B43 /* document.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = document.cpp; sourceTree = "<group>"; };
+		042A62571A3F330C006E8B43 /* htmltreebuilderstate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = htmltreebuilderstate.cpp; sourceTree = "<group>"; };
+		042A62581A3F330C006E8B43 /* htmltreebuilderstate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = htmltreebuilderstate.h; sourceTree = "<group>"; };
 		045630371A2CCFCC008D89A6 /* attribute.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = attribute.cpp; sourceTree = "<group>"; };
 		045630381A2CCFCC008D89A6 /* attribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = attribute.h; sourceTree = "<group>"; };
 		0456303A1A2E29AB008D89A6 /* csoup_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = csoup_string.h; sourceTree = "<group>"; };
@@ -240,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				0486594D1A388A0F00B73500 /* document_test.cpp */,
+				042A62531A3F0822006E8B43 /* list_test.cpp */,
 				0486594E1A388A0F00B73500 /* textnode_test.cpp */,
 				0486594B1A3889CA00B73500 /* comment_test.cpp */,
 				048659441A37E06A00B73500 /* element_test.cpp */,
@@ -301,6 +321,8 @@
 				049998381A2B6A0100DCA5BF /* vector.h */,
 				049998371A28D25D00DCA5BF /* stack.h */,
 				0499982A1A28CD2F00DCA5BF /* strfunc.h */,
+				042A62501A3EF572006E8B43 /* queue.cpp */,
+				042A62511A3EF572006E8B43 /* queue.h */,
 			);
 			path = internal;
 			sourceTree = "<group>";
@@ -324,6 +346,7 @@
 				045630451A2F526B008D89A6 /* xmldeclaration.h */,
 				045630371A2CCFCC008D89A6 /* attribute.cpp */,
 				045630381A2CCFCC008D89A6 /* attribute.h */,
+				042A62551A3F1A9D006E8B43 /* document.cpp */,
 			);
 			path = nodes;
 			sourceTree = "<group>";
@@ -343,6 +366,14 @@
 				040308FC1A3C5D2E00DC7297 /* tokeniser.h */,
 				040308FE1A3C5D4400DC7297 /* tokeniserstate.cpp */,
 				040308FF1A3C5D4400DC7297 /* tokeniserstate.h */,
+				042A62471A3EF51F006E8B43 /* treebuilder.cpp */,
+				042A62481A3EF51F006E8B43 /* treebuilder.h */,
+				042A624A1A3EF53C006E8B43 /* htmltreebuilder.cpp */,
+				042A624B1A3EF53C006E8B43 /* htmltreebuilder.h */,
+				042A624D1A3EF555006E8B43 /* parser.cpp */,
+				042A624E1A3EF555006E8B43 /* parser.h */,
+				042A62571A3F330C006E8B43 /* htmltreebuilderstate.cpp */,
+				042A62581A3F330C006E8B43 /* htmltreebuilderstate.h */,
 			);
 			path = parser;
 			sourceTree = "<group>";
@@ -431,8 +462,10 @@
 			files = (
 				040308FA1A3B2E8800DC7297 /* parseerrorlist.cpp in Sources */,
 				045630AF1A32E2DD008D89A6 /* gtest-port.cc in Sources */,
+				042A62591A3F330C006E8B43 /* htmltreebuilderstate.cpp in Sources */,
 				045630841A3042EF008D89A6 /* csoup_string.cpp in Sources */,
 				0486593C1A35E41A00B73500 /* vector_test.cpp in Sources */,
+				042A624F1A3EF555006E8B43 /* parser.cpp in Sources */,
 				048659481A387D0C00B73500 /* datanode_test.cpp in Sources */,
 				040309041A3CA36200DC7297 /* entities.cpp in Sources */,
 				040309001A3C5D4400DC7297 /* tokeniserstate.cpp in Sources */,
@@ -440,18 +473,22 @@
 				040308FD1A3C5D2E00DC7297 /* tokeniser.cpp in Sources */,
 				048659501A388A0F00B73500 /* textnode_test.cpp in Sources */,
 				048659381A35CAB100B73500 /* attribute_test.cpp in Sources */,
+				042A62561A3F1A9D006E8B43 /* document.cpp in Sources */,
 				045630B11A32E2DD008D89A6 /* gtest-test-part.cc in Sources */,
 				045630391A2CCFCC008D89A6 /* attribute.cpp in Sources */,
 				045630821A30245C008D89A6 /* strfunc.cpp in Sources */,
 				040308F71A3B2BDD00DC7297 /* parseerror.cpp in Sources */,
 				0486594F1A388A0F00B73500 /* document_test.cpp in Sources */,
+				042A624C1A3EF53C006E8B43 /* htmltreebuilder.cpp in Sources */,
 				045630B01A32E2DD008D89A6 /* gtest-printers.cc in Sources */,
 				0486593A1A35DFE700B73500 /* attributes_test.cpp in Sources */,
+				042A62541A3F0822006E8B43 /* list_test.cpp in Sources */,
 				048659421A3745F500B73500 /* tag.cpp in Sources */,
 				0486594C1A3889CA00B73500 /* comment_test.cpp in Sources */,
 				045630B21A32E2DD008D89A6 /* gtest-typed-test.cc in Sources */,
 				045630B31A32E2DD008D89A6 /* gtest.cc in Sources */,
 				045630BA1A340026008D89A6 /* csoup_string_test.cpp in Sources */,
+				042A62521A3EF572006E8B43 /* queue.cpp in Sources */,
 				045630801A30039E008D89A6 /* Allocators.cpp in Sources */,
 				040308EA1A39833200DC7297 /* stringbuffer.cpp in Sources */,
 				048659451A37E06A00B73500 /* element_test.cpp in Sources */,
@@ -459,6 +496,7 @@
 				045630B41A32E2DD008D89A6 /* gtest_main.cc in Sources */,
 				045630AD1A32E2DD008D89A6 /* gtest-death-test.cc in Sources */,
 				045630AE1A32E2DD008D89A6 /* gtest-filepath.cc in Sources */,
+				042A62491A3EF520006E8B43 /* treebuilder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
