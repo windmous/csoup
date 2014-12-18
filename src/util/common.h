@@ -403,6 +403,28 @@ template<int x> struct StaticAssertTest {};
 #define CSOUP_HAS_CXX11_TYPETRAITS 0
 #endif
 
+#define CSOUP_NEW(AllocatorVar, TypeName) \
+    (new ((AllocatorVar)->malloc_t< TypeName >()) TypeName())
+
+#define CSOUP_NEW1(AllocatorVar, TypeName, Arg1) \
+    (new ((AllocatorVar)->malloc_t< TypeName >()) TypeName(Arg1))
+
+#define CSOUP_NEW2(AllocatorVar, TypeName, Arg1, Arg2) \
+    (new ((AllocatorVar)->malloc_t< TypeName >()) TypeName(Arg1, Arg2))
+
+#define CSOUP_NEW3(AllocatorVar, TypeName, Arg1, Arg2, Arg3) \
+    (new ((AllocatorVar)->malloc_t< TypeName >()) TypeName(Arg1, Arg2, Arg3))
+
+#define CSOUP_NEW4(AllocatorVar, TypeName, Arg1, Arg2, Arg3, Arg4) \
+    (new ((AllocatorVar)->malloc_t< TypeName >()) TypeName(Arg1, Arg2, Arg3, Arg4))
+
+#define CSOUP_NEW5(AllocatorVar, TypeName, Arg1, Arg2, Arg3, Arg4, Arg5) \
+    (new ((AllocatorVar)->malloc_t< TypeName >()) TypeName(Arg1, Arg2, Arg3, Arg4, Arg5))
+
+#define CSOUP_DELETE(AllocatorVar, VarToBeFree) \
+    ((AllocatorVar)->deconstructAndFree(VarToBeFree))
+
+
 //#define CSOUP_ARRAY_LENGTH(ArrayName) (sizeof(ArrayName) / sizeof(*ArrayName))
 
 //!@endcond

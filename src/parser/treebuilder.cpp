@@ -91,6 +91,11 @@ namespace csoup {
         }
     }
     
+    void TreeBuilder::setTokeniserState(internal::TokeniserState *state) {
+        CSOUP_ASSERT(state != NULL);
+        tokeniser_->transition(state);
+    }
+    
     Element* TreeBuilder::currentElement() {
         return stack_->back();
     }

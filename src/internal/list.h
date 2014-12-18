@@ -25,12 +25,12 @@ namespace csoup {
                 delete ownAllocator;
             }
             
-            size_t getSize() const {
+            size_t size() const {
                 return size_;
             }
             
             bool empty() const {
-                return getSize() == 0;
+                return size() == 0;
             }
             
             const T* at(size_t index) const {
@@ -61,6 +61,16 @@ namespace csoup {
             void pop() {
                 CSOUP_ASSERT(listTail_);
                 remove(size_ - 1);
+            }
+            
+            T* front() {
+                CSOUP_ASSERT(listHead_);
+                return listHead_->data_;
+            }
+            
+            const T* front() const {
+                CSOUP_ASSERT(listHead_);
+                return listHead_->data_;
             }
             
             T* back() {
@@ -121,6 +131,10 @@ namespace csoup {
             
             ListIterator<T> begin() {
                 return ListIterator<T>(listHead_);
+            }
+            
+            ListIterator<T> end() {
+                return ListIterator<T>(listTail_);
             }
             
             friend class ListIterator<T>;
@@ -199,6 +213,7 @@ namespace csoup {
         
         template <class T>
         class ListIterator {
+        public:
             typedef typename List<T>::ListNode ListNode;
             
             bool hasNext() const {

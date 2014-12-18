@@ -84,7 +84,7 @@ concept Allocator {
         
         template <typename T>
         void deconstructAndFree(T* res) {
-            if (*res == NULL) {
+            if (res == NULL) {
                 return ;
             }
             

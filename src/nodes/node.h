@@ -4,6 +4,8 @@
 #include "../internal/nodedata.h"
 
 namespace csoup {
+    class Document;
+    
     class Node {
     public:
         Node(NodeTypeEnum type, Node* parent, size_t siblingIndex, Allocator* allocator) : data_(type, parent, siblingIndex, allocator) {
@@ -30,6 +32,9 @@ namespace csoup {
         const Node* parentNode() const {
             return data_.parent_;
         }
+        
+        // Gets the Document associated with this Node.
+        Document* ownerDocument() const;
         
     protected:
         internal::NodeData& data() {

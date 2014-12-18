@@ -45,6 +45,14 @@ namespace csoup {
         const CharType* data() const {return data_; }
         
         const size_t size() const {return length_;}
+        
+        bool equals(const StringRef& str) const {
+            return internal::strEquals(*this, str);
+        }
+        
+        bool equalsIgnoreCase(const StringRef& str) const {
+            return internal::strEqualsIgnoreCase(*this, str);
+        }
     private:
         const CharType* const data_; //!< plain CharType pointer
         const size_t length_; //!< length of the string (excluding the trailing NULL terminator)

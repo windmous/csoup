@@ -31,4 +31,19 @@ namespace csoup {
         // it's not necessary to check if ownAllocator_ is NULL or not;
         delete ownAllocator_;
     }
+    
+    void Document::setSystemIdentifier(const csoup::StringRef &systemIdentifier) {
+        CSOUP_DELETE(allocator(), systemIdentifier_);
+        systemIdentifier_ = CSOUP_NEW2(allocator(), String, systemIdentifier, allocator());
+    }
+    
+    void Document::setPublicIdentifier(const csoup::StringRef &publicIdentifier) {
+        CSOUP_DELETE(allocator(), publicIdentifier_);
+        publicIdentifier_ = CSOUP_NEW2(allocator(), String, publicIdentifier, allocator());
+    }
+    
+    void Document::setName(const csoup::StringRef &name) {
+        CSOUP_DELETE(allocator(), name_);
+        name_ = CSOUP_NEW2(allocator(), String, name, allocator());
+    }
 }

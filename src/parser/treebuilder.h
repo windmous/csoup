@@ -20,10 +20,13 @@ namespace csoup {
     class Tokeniser;
     class ParseErrorList;
     class Token;
+
     
     namespace internal {
         template <class T>
         class List;
+        
+        class TokeniserState;
     }
     
     class TreeBuilder {
@@ -32,16 +35,27 @@ namespace csoup {
         virtual ~TreeBuilder();
         
         // errors should never be NULL
-        Document* parse(const StringRef& input, const StringRef& baseUri, ParseErrorList* errors, Allocator* allocator) {
+        virtual Document* parse(const StringRef& input, const StringRef& baseUri, ParseErrorList* errors, Allocator* allocator) {
             initialiseParse(input, baseUri, errors, allocator);
             runParser();
             
             return doc_;
         }
         
+        void setTokeniserState(internal::TokeniserState* state);
+        
+        internal::List<Element>* stack() {
+            return stack_;
+        }
+
+        Element* currentElement();
+        
+        Tokeniser* tokeniser() {
+            return tokeniser_;
+        }
     protected:
         virtual bool process(Token* token) = 0;
-        Element* currentElement();
+
         
         // we make the members have protected privileges, which break the rule
         // of encapsulation in OOP
@@ -58,9 +72,9 @@ namespace csoup {
         Document* doc_; // current doc we are building into
         ParseErrorList* errors_; // null when not tracking errors
         
-    private:
         void initialiseParse(const StringRef& input, const StringRef& baseUri, ParseErrorList* errors, Allocator* allocator);
         
+    private:
         void freeResources();
         
         void runParser();

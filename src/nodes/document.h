@@ -48,6 +48,27 @@ namespace csoup {
         void setQuirksMode(QuirksModeEnum quirksMode) {
             quirksMode_ = quirksMode;
         }
+        
+        void setPublicIdentifier(const StringRef& publicIdentifier);
+        
+        StringRef publicIdentifier() const {
+            CSOUP_ASSERT(publicIdentifier_ != NULL);
+            return publicIdentifier_->ref();
+        }
+        
+        void setSystemIdentifier(const StringRef& systemIdentifier);
+        
+        StringRef systemIdentifier() const {
+            CSOUP_ASSERT(systemIdentifier_ != NULL);
+            return systemIdentifier_->ref();
+        }
+        
+        void setName(const StringRef& name);
+        
+        StringRef name() const {
+            return name_->ref();
+        }
+        
     private:
         QuirksModeEnum quirksMode_;
         String* publicIdentifier_;

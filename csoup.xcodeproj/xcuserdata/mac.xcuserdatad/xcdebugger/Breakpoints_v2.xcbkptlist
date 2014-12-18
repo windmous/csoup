@@ -15,7 +15,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "52"
             endingLineNumber = "52"
-            landmarkName = "removeAttribute(AttributeNamespaceEnum space, const StringRef&amp; key)"
+            landmarkName = "removeAttribute(const StringRef&amp; key)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -31,8 +31,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "23"
             endingLineNumber = "23"
-            landmarkName = "allocator()"
-            landmarkType = "5">
+            landmarkName = "class Node"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -48,6 +48,36 @@
             startingLineNumber = "103"
             endingLineNumber = "103"
             landmarkName = "hasAttribute(const StringRef&amp; key)"
+            landmarkType = "5">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/nodes/document.cpp"
+            timestampString = "440506373.645702"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "10"
+            endingLineNumber = "10">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/parser/htmltreebuilderstate.cpp"
+            timestampString = "440509866.135661"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "348"
+            endingLineNumber = "348"
+            landmarkName = "InBody::process(Token* t, HtmlTreeBuilder* tb)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>

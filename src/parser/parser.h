@@ -6,9 +6,13 @@
 //  Copyright (c) 2014 windpls. All rights reserved.
 //
 
-#ifndef __csoup__parser__
-#define __csoup__parser__
+#ifndef CSOUP_PARSER_H_
+#define CSOUP_PARSER_H_
 
-#include <stdio.h>
+namespace csoup {
+    class Parser {
+        
+    };
+}
 
-#endif /* defined(__csoup__parser__) */
+#endif // CSOUP_PARSER_H_

@@ -30,6 +30,14 @@ namespace csoup {
         CSOUP_TOKEN_EOF
     };
     
+    class TagToken;
+    class StartTagToken;
+    class EndTagToken;
+    class CommentToken;
+    class CharacterToken;
+    class DoctypeToken;
+    class EOFToken;
+    
     class Token {
     public:
         Token(TokenTypeEnum type) : tokenType_(type) {
@@ -41,6 +49,49 @@ namespace csoup {
         TokenTypeEnum tokenType() const {
             return tokenType_;
         }
+        
+        bool isStartTagToken() const {
+            return tokenType() == CSOUP_TOKEN_START_TAG;
+        }
+        
+        StartTagToken* asStartTagToken();
+        
+        bool isEndTagToken() const {
+            return tokenType() == CSOUP_TOKEN_END_TAG;
+        }
+        
+        EndTagToken* asEndTagToken();
+        
+        bool isTagToken() const {
+            return isStartTagToken() || isEndTagToken();
+        }
+        
+        TagToken* asTagToken();
+        
+        bool isCommentToken() const {
+            return tokenType() == CSOUP_TOKEN_COMMENT;
+        }
+        
+        CommentToken* asCommentToken();
+        
+        bool isCharacterToken() const {
+            return tokenType() == CSOUP_TOKEN_CHARACTER;
+        }
+        
+        CharacterToken* asCharacterToken();
+        
+        bool isDoctypeToken() const {
+            return tokenType() == CSOUP_TOKEN_DOCTYPE;
+        }
+        
+        DoctypeToken* asDoctypeToken();
+        
+        bool isEOFToken() const {
+            return tokenType() == CSOUP_TOKEN_EOF;
+        }
+        
+        EOFToken* asEOFToken();
+        
     private:
         TokenTypeEnum tokenType_;
     };
@@ -258,6 +309,17 @@ namespace csoup {
             CSOUP_ASSERT(allocator != NULL);
         }
         
+        StartTagToken(const StringRef& name, const Attributes& attrs, Allocator* allocator)
+        :TagToken(CSOUP_TOKEN_START_TAG, allocator) {
+            CSOUP_ASSERT(allocator != NULL);
+            for (size_t i = 0; i < attrs.size(); ++ i) {
+                const Attribute* attr = attrs.get(i);
+                attributes()->addAttribute(attr->key(), attr->value());
+            }
+            
+            setTagName(name);
+        }
+        
         StartTagToken(const StringRef& name, Allocator* allocator) : TagToken(CSOUP_TOKEN_START_TAG, allocator) {
             CSOUP_ASSERT(allocator != NULL);
             setTagName(name);
@@ -338,6 +400,44 @@ namespace csoup {
             
         }
     };
+    
+    //////////////////////////////////////////////////
+    // implementation of asXXXX in Token
+    
+    inline TagToken* Token::asTagToken() {
+        CSOUP_ASSERT(isTagToken());
+        return (TagToken*)this;
+    }
+    
+    inline StartTagToken* Token::asStartTagToken() {
+        CSOUP_ASSERT(isStartTagToken());
+        return (StartTagToken*)this;
+    }
+    
+    inline EndTagToken* Token::asEndTagToken() {
+        CSOUP_ASSERT(isEndTagToken());
+        return (EndTagToken*)this;
+    }
+    
+    inline CommentToken* Token::asCommentToken() {
+        CSOUP_ASSERT(isCommentToken());
+        return (CommentToken*)this;
+    }
+    
+    inline CharacterToken* Token::asCharacterToken() {
+        CSOUP_ASSERT(isCharacterToken());
+        return (CharacterToken*)this;
+    }
+    
+    inline DoctypeToken* Token::asDoctypeToken() {
+        CSOUP_ASSERT(isDoctypeToken());
+        return (DoctypeToken*)this;
+    }
+    
+    inline EOFToken* Token::asEOFToken() {
+        CSOUP_ASSERT(isEOFToken());
+        return (EOFToken*)this;
+    }
 }
 
 #endif // CSOUP_TOKEN_H_

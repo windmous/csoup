@@ -37,6 +37,11 @@ namespace csoup {
             return get(CSOUP_ATTR_NAMESPACE_NONE, key);
         }
         
+        const Attribute* get(const size_t index) const {
+            CSOUP_ASSERT(index < size());
+            return attributes_->at(index);
+        }
+        
         void removeAttribute(AttributeNamespaceEnum space, const StringRef& key) {
             if (!attributes_ || !key.size()) return ;
             

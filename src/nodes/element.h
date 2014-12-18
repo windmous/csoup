@@ -170,6 +170,8 @@ namespace csoup {
             return countOfChildren;
         }
         
+        void remove();
+        
         Element* createElement(size_t index, TagNamespaceEnum space, TagEnum tag, Attributes* attributes) {
             Element* ret = static_cast<Element*>(addChild(index));
             new (ret) Element(space, tag, attributes, allocator());
