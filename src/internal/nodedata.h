@@ -20,9 +20,10 @@ namespace csoup {
         /** CDATA node. v will be a GumboText. */
         CSOUP_NODE_CDATA,
         /** Comment node.  v. will be a GumboText, excluding comment delimiters. */
-        CSOUP_NODE_COMMENT//,
+        CSOUP_NODE_COMMENT,
         /** Text node, where all contents is whitespace.  v will be a GumboText. */
         //CSOUP_NODE_WHITESPACE
+        CSOUP_NODE_FORMELEMENT
     } NodeTypeEnum;
     
     typedef enum {
@@ -31,57 +32,57 @@ namespace csoup {
         CSOUP_DOCTYPE_LIMITED_QUIRKS
     } QuirksModeEnum;
     
-    namespace internal {
-        struct TextNodeData {
-            String* text_;
-        };
-        
-        template <typename T>
-        class Vector;
-
-        
-        struct ElementData {
-            TagNamespaceEnum tagNamespace_;
-            TagEnum tag_;
-            
-            Attributes* attributes_;
-            Vector<Node>* childNodes_;
-        };
-        
-//        struct DocumentData {
-//            QuirksModeEnum quirksMode_;
-//            String* publicIdentifier_;
-//            String* systemIdentifier_;
-//            String* name_;
-//            bool hasDocType_;
-//            
-//            Vector<Node>* childNodes_;
-//            // You may add some options
+//    namespace internal {
+//        struct TextNodeData {
+//            String* text_;
 //        };
-        
-        struct NodeData {
-            NodeData(NodeTypeEnum type, Node* parent, size_t index, Allocator* allocator) :
-                    type_(type), parent_(parent),
-                    siblingIndex_(index), allocator_(allocator) {
-                CSOUP_ASSERT(allocator_ != NULL);
-            }
-            
-            NodeTypeEnum type_;
-            Node* parent_;
-            size_t siblingIndex_;
-            
-            Allocator* allocator_;
-            union {
-                //DocumentData doc_;
-                ElementData element_;
-                TextNodeData text_;
-            } v_;
-            
-        private:
-            NodeData(const NodeData&);
-            NodeData operator = (const NodeData* );
-        };
-    }
+//        
+//        template <typename T>
+//        class Vector;
+//
+//        
+//        struct ElementData {
+//            TagNamespaceEnum tagNamespace_;
+//            TagEnum tag_;
+//            
+//            Attributes* attributes_;
+//            Vector<Node>* childNodes_;
+//        };
+//        
+////        struct DocumentData {
+////            QuirksModeEnum quirksMode_;
+////            String* publicIdentifier_;
+////            String* systemIdentifier_;
+////            String* name_;
+////            bool hasDocType_;
+////            
+////            Vector<Node>* childNodes_;
+////            // You may add some options
+////        };
+//        
+//        struct NodeData {
+//            NodeData(NodeTypeEnum type, Node* parent, size_t index, Allocator* allocator) :
+//                    type_(type), parent_(parent),
+//                    siblingIndex_(index), allocator_(allocator) {
+//                CSOUP_ASSERT(allocator_ != NULL);
+//            }
+//            
+//            NodeTypeEnum type_;
+//            Node* parent_;
+//            size_t siblingIndex_;
+//            
+//            Allocator* allocator_;
+//            union {
+//                //DocumentData doc_;
+//                ElementData element_;
+//                TextNodeData text_;
+//            } v_;
+//            
+//        private:
+//            NodeData(const NodeData&);
+//            NodeData operator = (const NodeData* );
+//        };
+//    }
 }
 
 #endif // CSOUP_NODE_H_
