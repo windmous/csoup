@@ -7,43 +7,43 @@
 namespace csoup {
     class DataNode : public Node {
     public:
-        DataNode(const StringRef& data, Allocator* allocator) :
-            Node(CSOUP_NODE_CDATA, NULL, 0, allocator) {
+        DataNode(const StringRef& data, const StringRef& baseUri, Allocator* allocator) :
+            Node(CSOUP_NODE_CDATA, NULL, 0, baseUri, allocator) {
             setWholeData(data);
         }
         
-        DataNode(Allocator* allocator) :
-            Node(CSOUP_NODE_CDATA, NULL, 0, allocator) {
-            text().text_ = NULL;
+        DataNode(const StringRef& baseUri, Allocator* allocator) :
+            Node(CSOUP_NODE_CDATA, NULL, 0, baseUri, allocator) {
+            data_ = NULL;
         }
 
         
         ~DataNode() {
-            if (text().text_) {
-                text().text_->~String();
-                allocator()->free(text().text_);
-                text().text_ = NULL;
+            if (data_) {
+                data_->~String();
+                allocator()->free(data_);
+                data_ = NULL;
             }
         }
         
         void setWholeData(const StringRef& data) {
-            if (text().text_) {
-                text().text_->~String();
+            if (data_) {
+                data_->~String();
             } else {
-                text().text_ = allocator()->malloc_t<String>();
+                data_ = allocator()->malloc_t<String>();
             }
          
-            new (text().text_) String(data, allocator());
+            new (data_) String(data, allocator());
         }
         
         StringRef wholeData() {
-            return text().text_ ? text().text_->ref() : StringRef("");
+            return data_ ? data_->ref() : StringRef("");
         }
         
+    private:
+        String* data_;
         // Create a new DataNode from HTML encoded data.
     };
-    
-    CSOUP_STATIC_ASSERT(sizeof(DataNode) == sizeof(Node));
 }
 
 #endif

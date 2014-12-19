@@ -21,6 +21,19 @@ namespace csoup {
             allocator_->free(attributes_);
         }
         
+        Attributes(const Attributes& attrs, Allocator* allocator) : allocator_(allocator) {
+            CSOUP_ASSERT(allocator != NULL);
+            if (attrs.size() == 0) {
+                return ;
+            }
+            
+            // Use a very naive style;  Vector didn't have a copy constructor
+            for (size_t i = 0; i < attrs.size(); ++ i) {
+                const Attribute* attr = attrs.get(i);
+                addAttribute(attr->key(), attr->value());
+            }
+        }
+        
         StringRef get(AttributeNamespaceEnum space, const StringRef& key) const {
             if (!attributes_ || !key.size())
                 return StringRef("");
@@ -57,21 +70,22 @@ namespace csoup {
             return removeAttribute(CSOUP_ATTR_NAMESPACE_NONE, key);
         }
         
-        bool addAttribute(AttributeNamespaceEnum space, const StringRef& key,
+        void addAttribute(AttributeNamespaceEnum space, const StringRef& key,
                           const StringRef& value) {
-            if (!key.size() || hasAttribute(space, key)) return false;
+            if (!key.size()) return ;
             if (!attributes_) {
                 attributes_ = allocator_->malloc_t< internal::Vector<Attribute> >();
             }
             
+            // try to remove the attribute entry 
+            removeAttribute(space, key);
+            
             Attribute* newAttribute = attributes_->push();
             new (newAttribute) Attribute(space, key, value, allocator_);
-            
-            return true;
         }
         
-        bool addAttribute(const StringRef& key,const StringRef& value) {
-            return addAttribute(CSOUP_ATTR_NAMESPACE_NONE, key, value);
+        void addAttribute(const StringRef& key,const StringRef& value) {
+            addAttribute(CSOUP_ATTR_NAMESPACE_NONE, key, value);
         }
 
         
@@ -97,8 +111,15 @@ namespace csoup {
         Allocator* allocator() {
             return allocator_;
         }
+        
+        bool equals(const Attributes& obj) const {
+            return true;
+        }
         //friend void internal::destroy(Attributes* attributes, Allocator* allocator);
     private:
+        Attributes(const Attributes&);
+        Attributes operator=(const Attributes&);
+        
         static bool isAttributeHasKey(const Attribute* attr,
                             AttributeNamespaceEnum space, const StringRef& key) {
             return attr->nameSpace() == space && \

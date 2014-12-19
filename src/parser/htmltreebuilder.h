@@ -32,6 +32,7 @@ namespace csoup {
     class CommentToken;
     class HtmlTreeBuilderState;
     class CharacterToken;
+    class FormElement;
     
     namespace internal {
         template <typename T>
@@ -87,7 +88,6 @@ namespace csoup {
         
         void maybeSetBaseUri(Element* base);
         
-        
         bool isFragmentParsing() const {
             return fragmentParsing_;
         }
@@ -118,33 +118,33 @@ namespace csoup {
         
         Element* getFromStack(const StringRef& elName);
         
-        bool removeFromStack(Element* el);
+        bool removeFromStack(Element* el, bool del);
         
-        void popStackToClose(const StringRef& s1);
-        void popStackToClose(const StringRef& s1, const StringRef& s2);
-        void popStackToClose(const StringRef& s1, const StringRef& s2, const StringRef& s3);
-        void popStackToClose(const StringRef& s1, const StringRef& s2, const StringRef& s3, const StringRef& s4);
-        void popStackToClose(const StringRef& s1, const StringRef& s2, const StringRef& s3, const StringRef& s4,
+        void popStackToClose(bool del, const StringRef& s1);
+        void popStackToClose(bool del, const StringRef& s1, const StringRef& s2);
+        void popStackToClose(bool del, const StringRef& s1, const StringRef& s2, const StringRef& s3);
+        void popStackToClose(bool del, const StringRef& s1, const StringRef& s2, const StringRef& s3, const StringRef& s4);
+        void popStackToClose(bool del, const StringRef& s1, const StringRef& s2, const StringRef& s3, const StringRef& s4,
                              const StringRef& s5);
-        void popStackToClose(const StringRef& s1, const StringRef& s2, const StringRef& s3, const StringRef& s4,
+        void popStackToClose(bool del, const StringRef& s1, const StringRef& s2, const StringRef& s3, const StringRef& s4,
                              const StringRef& s5, const StringRef& s6);
-        void popStackToClose(const StringRef* elName, size_t cnt);
+        void popStackToClose(bool del, const StringRef* elName, size_t cnt);
         
-        void popStackToBefore(const StringRef& elName);
+        void popStackToBefore(bool del, const StringRef& elName);
         
-        void clearStackToTableContext();
+        void clearStackToTableContext(bool del);
         
-        void clearStackToTableBodyContext();
+        void clearStackToTableBodyContext(bool del);
         
-        void clearStackToTableRowContext();
+        void clearStackToTableRowContext(bool del);
         
         Element* aboveOnStack(Element* el);
         
         void insertOnStackAfter(Element* after, Element* in);
         
-        void replaceOnStack(Element* out, Element* in);
+        void replaceOnStack(Element* out, Element* in, bool del);
         
-        void replaceInQueue(internal::List<Element> queue, Element* out, Element* in);
+        void replaceInQueue(internal::List<Element*>* queue, Element* out, Element* in, bool del);
         
         void resetInsertionMode();
         
@@ -152,7 +152,7 @@ namespace csoup {
         
         bool inScope(const StringRef& targetName);
         
-        bool inScope(const StringRef& targetName, StringRef* extras, size_t len);
+        bool inScope(const StringRef& targetName, const StringRef* extras, size_t len);
         
         bool inListItemScope(const StringRef& targetName);
         
@@ -162,7 +162,7 @@ namespace csoup {
         
         bool inSelectScope(const StringRef& targetName);
         
-        void setHeadElement(Element* headElement);
+        void setHeadElement(Element* headElement, bool del);
         
         Element* headElement() {
             return headElement_;
@@ -176,13 +176,11 @@ namespace csoup {
             fosterInserts = fosterInserts;
         }
         
-//        FormElement getFormElement() {
-//            return formElement;
-//        }
+        FormElement* formElement() {
+            return formElement_;
+        }
         
-//        void setFormElement(FormElement formElement) {
-//            formElement = formElement;
-//        }
+        void setFormElement(FormElement* formElement, bool del);
         
         void newPendingTableCharacters();
         
@@ -191,28 +189,28 @@ namespace csoup {
         }
         
         // M
-        void setPendingTableCharacters(internal::List<CharacterToken>* pendingTableCharacters);
+        void setPendingTableCharacters(internal::List<CharacterToken*>* pendingTableCharacters, bool del);
         
-        void generateImpliedEndTags(const StringRef& excludeTag);
+        void generateImpliedEndTags(const StringRef& excludeTag, bool del);
         
-        void generateImpliedEndTags();
+        void generateImpliedEndTags(bool del);
         
-        bool isSpecial(Element* el);
+        bool isSpecial(const Element* el);
         
         // active formatting elements
-        void pushActiveFormattingElements(Element* in);
+        void pushActiveFormattingElements(Element* in, bool del);
         
-        void reconstructFormattingElements();
+        void reconstructFormattingElements(bool del);
         
-        void clearFormattingElementsToLastMarker();
+        void clearFormattingElementsToLastMarker(bool del);
         
-        void removeFromActiveFormattingElements(Element* el);
+        void removeFromActiveFormattingElements(Element* el, bool del);
         
         bool isInActiveFormattingElements(Element* el);
         
         Element* getActiveFormattingElement(const StringRef& nodeName);
         
-        void replaceActiveFormattingElement(Element* out, Element* in);
+        void replaceActiveFormattingElement(Element* out, Element* in, bool del);
         
         void insertMarkerToFormattingElements();
         
@@ -224,19 +222,24 @@ namespace csoup {
         
     private:
         void insertNode(Node* node);
-        bool isElementInQueue(internal::List<Element>* queue, Element* element);
+        bool isElementInQueue(internal::List<Element*>* queue, Element* element);
         void replaceInQueue(internal::List<Element>* queue, Element* out, Element* in);
         bool isSameFormattingElement(Element* a, Element* b);
 
-        void clearStackToContext(const StringRef& n1);
-        void clearStackToContext(const StringRef& n1, const StringRef& n2);
-        void clearStackToContext(const StringRef& n1, const StringRef& n2, const StringRef& n3);
-        void clearStackToContext(const StringRef& n1, const StringRef& n2, const StringRef& n3, const StringRef& n4);
-        void clearStackToContext(const StringRef& n1, const StringRef& n2, const StringRef& n3, const StringRef& n4,
+        void clearStackToContext(bool del, const StringRef& n1);
+        void clearStackToContext(bool del, const StringRef& n1, const StringRef& n2);
+        void clearStackToContext(bool del, const StringRef& n1, const StringRef& n2, const StringRef& n3);
+        void clearStackToContext(bool del, const StringRef& n1, const StringRef& n2, const StringRef& n3, const StringRef& n4);
+        void clearStackToContext(bool del, const StringRef& n1, const StringRef& n2, const StringRef& n3, const StringRef& n4,
                                  const StringRef& n5);
+        void clearStackToContext(bool del, const StringRef* n1, size_t cnt);
         
-        bool inSpecificScope(const StringRef& targetName, StringRef* baseTypes, size_t baseTypeLen,
-                             StringRef* extraTypes, size_t extraTypeLen);
+        bool inSpecificScope(const StringRef* targetName, size_t targetNameLen, const StringRef* baseTypes, size_t baseTypeLen,
+                            const StringRef* extraTypes, size_t extraTypeLen);
+        
+        bool inSpecificScope(const StringRef& targetName, const StringRef* baseTypes, size_t baseTypeLen,
+                             const StringRef* extraTypes, size_t extraTypeLen);
+
         
 //        bool inSpecificScope(const StringRef& targetNames, StringRef* baseTypes, size_t baseTypeLen,
 //                             StringRef* extraTypes, size_t extraTypeLen);
@@ -257,8 +260,10 @@ namespace csoup {
         
         bool baseUriSetFromDoc_;
         Element* headElement_;
-        // FormElement formElement;
+        FormElement* formElement_;
         Element* contextElement_;
+        
+        // these containers are just references
         internal::List<Element*>* formattingElements_;
         internal::List<CharacterToken*>* pendingTableCharacters_;
         

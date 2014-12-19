@@ -44,7 +44,7 @@ namespace csoup {
         
         void setTokeniserState(internal::TokeniserState* state);
         
-        internal::List<Element>* stack() {
+        internal::List<Element*>* stack() {
             return stack_;
         }
 
@@ -65,16 +65,16 @@ namespace csoup {
         // these are resources needed to be destroied
         CharacterReader* reader_;
         Tokeniser* tokeniser_;
-        internal::List<Element>* stack_; // the stack of open elements
+        internal::List<Element*>* stack_; // the stack of open elements
         Token* currentToken_; // currentToken is used only for error tracking.
         
         // don't destroy these two guy!
         Document* doc_; // current doc we are building into
         ParseErrorList* errors_; // null when not tracking errors
+        String* baseUri_;
         
         void initialiseParse(const StringRef& input, const StringRef& baseUri, ParseErrorList* errors, Allocator* allocator);
         
-    private:
         void freeResources();
         
         void runParser();

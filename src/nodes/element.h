@@ -2,6 +2,7 @@
 #define CSOUP_ELEMENT_H_
 
 #include "../internal/nodedata.h"
+#include "allocators.h"
 #include "attributes.h"
 #include "node.h"
 #include "textnode.h"
@@ -10,39 +11,52 @@
 #include "tag.h"
 
 namespace csoup {
+    class ElementsRef;
+    
     class Element : public Node {
     public:
-        Element(TagNamespaceEnum space, TagEnum tag, Attributes* attributes, Allocator* allocator) :
-                Node(CSOUP_NODE_ELEMENT, NULL, 0, allocator) {
-            element().tagNamespace_ = space;
-            element().tag_ = tag;
-            element().attributes_ = attributes;
-            element().childNodes_ =  NULL;
+        Element(const StringRef& tagName, const Attributes& attributes, const StringRef& baseUri, Allocator* allocator) :
+                Node(CSOUP_NODE_ELEMENT, NULL, 0, baseUri, allocator) {
+            CSOUP_ASSERT(Tag::isKnownTag(tagName));
+                    
+            tag_ = Tag::valueOf(tagName);
+            attributes_ = new (allocator->malloc_t<Attributes>()) Attributes(attributes, allocator);
+            childNodes_ =  NULL;
+            classes_ = NULL;
         }
         
-        ~Element() {
-            Attributes* attributes = element().attributes_;
-            if (attributes) {
-                attributes->~Attributes();
-                allocator()->free(attributes);
-            }
+        Element(const StringRef& tagName, const StringRef& baseUri, Allocator* allocator) :
+        Node(CSOUP_NODE_ELEMENT, NULL, 0, baseUri, allocator) {
+            CSOUP_ASSERT(Tag::isKnownTag(tagName));
             
-            internal::Vector<Node>* childNodes = element().childNodes_;
-            if (childNodes) {
-                childNodes->~Vector<Node>();
-                allocator()->free(childNodes);
+            tag_ = Tag::valueOf(tagName);
+            attributes_ = NULL;
+            childNodes_ =  NULL;
+            classes_ = NULL;
+        }
+
+        ~Element() {
+            for (size_t i = 0; i < childNodes_->size(); ++ i) {
+                CSOUP_DELETE(allocator(), (*childNodes_->at(i)));
             }
+            CSOUP_DELETE(allocator(), attributes_);
+            CSOUP_DELETE(allocator(), childNodes_);
+            CSOUP_DELETE(allocator(), classes_);
         }
         
         //////////////////////////////////////////////////
         // Methods about element
         
-        TagEnum tag() const {
-            return element().tag_;
+        Tag* tag() const {
+            return tag_;
         }
         
         StringRef tagName() const {
-            return tagEnumToName(tag());
+            return tag_->tagName();
+        }
+        
+        void setTagName(const StringRef& tagName) {
+            tag_ = Tag::valueOf(tagName);
         }
         
         /////////////////////////////////////////////////
@@ -71,9 +85,11 @@ namespace csoup {
                             elementPar->childNode(siblingIndex() + 1) : NULL;
         }
         
+        void parents(ElementsRef* output) {
+            accumulateParents(this, output);
+        }
+
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        void before() {}
-        void after() {}
         //////////////////////////////////////////////////
         // Methods about attributes
         
@@ -82,20 +98,20 @@ namespace csoup {
         }
         
         StringRef attr(AttributeNamespaceEnum space, const StringRef& key) const {
-            return element().attributes_ ? element().attributes_->get(key) : StringRef("");
+            return attributes_ ? attributes_->get(key) : StringRef("");
         }
         
         const Attributes* attributes() const {
-            return element().attributes_;
+            return attributes_;
         }
         
-        bool addAttribute(const StringRef& key, const StringRef& value) {
-            return addAttribute(CSOUP_ATTR_NAMESPACE_NONE, key, value);
+        void addAttribute(const StringRef& key, const StringRef& value) {
+            addAttribute(CSOUP_ATTR_NAMESPACE_NONE, key, value);
         }
         
-        bool addAttribute(AttributeNamespaceEnum space, const StringRef& key,
+        void addAttribute(AttributeNamespaceEnum space, const StringRef& key,
                           const StringRef& value) {
-            return ensureAttributes()->addAttribute(space, key, value);
+            ensureAttributes()->addAttribute(space, key, value);
         }
         
         bool hasAttribute(const StringRef& key) const {
@@ -103,7 +119,7 @@ namespace csoup {
         }
         
         bool hasAttribute(AttributeNamespaceEnum space, const StringRef& key) const {
-            return element().attributes_ ? element().attributes_->hasAttribute(space, key) : false;
+            return attributes_ ? attributes_->hasAttribute(space, key) : false;
         }
         
         void removeAttribute(const StringRef& key) {
@@ -111,44 +127,46 @@ namespace csoup {
         }
         
         void removeAttribute(AttributeNamespaceEnum space, const StringRef& key) {
-            if (element().attributes_) element().attributes_->removeAttribute(space, key);
+            if (attributes_) attributes_->removeAttribute(space, key);
         }
         
         ////////////////////////////////////////////////
         // Methods about children node
         size_t childNodeSize() const {
-            return element().childNodes_ ? element().childNodes_->size() : 0;
+            return childNodes_ ? childNodes_->size() : 0;
         }
         
-        Node* childNode(size_t index) const {
+        const Node* childNode(size_t index) const {
             CSOUP_ASSERT(index < childNodeSize());
-            return element().childNodes_->at(index);
+            return *childNodes_->at(index);
         }
         
-        void removeChild(size_t index) {
+        Node* childNode(size_t index) {
+            CSOUP_ASSERT(index < childNodeSize());
+            return *childNodes_->at(index);
+        }
+        
+        void removeChild(size_t index, bool del) {
             CSOUP_ASSERT(index < childNodeSize());
             
             // the node in vector would be destroyed
-            element().childNodes_->remove(index);
+            if (del) {
+                CSOUP_DELETE(allocator(), *childNodes_->at(index));
+            }
+            
+            childNodes_->remove(index);
             reindexChildren();
         }
         
-        void removeChild(Node** node) {
-            CSOUP_ASSERT((*node)->parentNode() == this);
-            removeChild((*node)->siblingIndex());
-            *node = NULL;
+        void removeChild(Node* node, bool del) {
+            CSOUP_ASSERT(node->parentNode() == this);
+            removeChild(node->siblingIndex(), del);
         }
-        
         
         ///////////////////////////////////////////////
         // !!!!!!!!!!!!!!!!
-        Node* addChild(NodeTypeEnum type) {
-            Node* ret = ensureChildNodes()->push();
-            
-            // we don't need re-ind;ex operation
-            reindexChildren(childNodeSize() - 1);
-            return ret;
-        }
+        //template <NodeTypeEnum>
+        //Node* addChild(NodeTypeEnum type);
         
         //void addChild(size_t index, Node* node) {
         //    CSOUP_ASSERT(node->parentNode() == NULL);
@@ -164,95 +182,134 @@ namespace csoup {
             }
             
             for (size_t i = 0; i < countOfChildren; ++ i) {
-                arrayBuffer[i] = element().childNodes_->at(i);
+                arrayBuffer[i] = *(childNodes_->at(i));
             }
             
             return countOfChildren;
         }
         
-        void remove();
+        void insertNode(size_t index, Node* node) {
+            *insert(index) = node;
+            reindexChildren(index);
+        }
         
-        Element* createElement(size_t index, TagNamespaceEnum space, TagEnum tag, Attributes* attributes) {
-            Element* ret = static_cast<Element*>(addChild(index));
-            new (ret) Element(space, tag, attributes, allocator());
+        void appendNode(Node* node) {
+            *append() = node;
+            reindexChildren(childNodes_->size() - 1);
+        }
+        
+        Element* insertElement(size_t index, const StringRef& tagName, const Attributes& attributes) {
+            Element* ret = new (allocator()->malloc_t<Element>()) Element(tagName, attributes, baseUri(), allocator());
             ret->setParentNode(this);
             
+            childNodes_->insert(index, ret);
             reindexChildren(index);
+            
             return ret;
         }
         
-        Element* appendElement(TagNamespaceEnum space, TagEnum tag, Attributes* attributes) {
-            Element* ret = static_cast<Element*>(appendChild());
-            new (ret) Element(space, tag, attributes, allocator());
+        Element* insertElement(size_t index, const StringRef& tagName) {
+            Element* ret = new (allocator()->malloc_t<Element>()) Element(tagName, baseUri(), allocator());
             ret->setParentNode(this);
             
+            childNodes_->insert(index, ret);
+            reindexChildren(index);
+            
+            return ret;
+        }
+        
+        Element* appendElement(const StringRef& tagName, const Attributes& attributes) {
+            Element* ret = new (allocator()->malloc_t<Element>()) Element(tagName, attributes, baseUri(), allocator());
+            ret->setParentNode(this);
+            
+            childNodes_->push(ret);
             ret->setSiblingIndex(childNodeSize() - 1);
+            
+            return ret;
+        }
+        
+        Element* appendElement(const StringRef& tagName) {
+            Element* ret = new (allocator()->malloc_t<Element>()) Element(tagName, baseUri(), allocator());
+            ret->setParentNode(this);
+            
+            childNodes_->push(ret);
+            ret->setSiblingIndex(childNodeSize() - 1);
+            
             return ret;
         }
         
 #define CREATE_TEXT_BASED_NODE_METHOD(NodeTypeName) \
-    NodeTypeName* create##NodeTypeName(size_t index, const StringRef& text) {\
-        NodeTypeName* ret = static_cast<NodeTypeName*>(addChild(index)); \
-        new (ret) NodeTypeName(text, allocator()); \
+    NodeTypeName* insert##NodeTypeName(size_t index, const StringRef& text) {\
+        NodeTypeName* ret = allocator()->malloc_t<NodeTypeName>(); \
+        new (ret) NodeTypeName(text, baseUri(), allocator()); \
         ret->setParentNode(this); \
-        reindexChildren(index); \
-        return ret; \
-    } \
-    \
-    NodeTypeName* create##NodeTypeName(size_t index) { \
-        NodeTypeName* ret = static_cast<NodeTypeName*>(addChild(index)); \
-        new (ret) NodeTypeName(allocator()); \
-        ret->setParentNode(this); \
+        childNodes_->insert(index, ret); \
         reindexChildren(index); \
         return ret; \
     } \
     \
     NodeTypeName* append##NodeTypeName(size_t index, const StringRef& text) { \
-        NodeTypeName* ret = static_cast<NodeTypeName*>(appendChild()); \
-        new (ret) NodeTypeName(text, allocator()); \
+        NodeTypeName* ret = allocator()->malloc_t<NodeTypeName>(); \
+        new (ret) NodeTypeName(text, baseUri(), allocator()); \
         ret->setParentNode(this); \
+        childNodes_->push(ret); \
         ret->setSiblingIndex(childNodeSize() - 1); \
         return ret; \
-    } \
-    \
-    NodeTypeName* append##NodeTypeName(size_t index) { \
-        NodeTypeName* ret = static_cast<NodeTypeName*>(appendChild()); \
-        new (ret) NodeTypeName(allocator()); \
-        ret->setParentNode(this); \
-        ret->setSiblingIndex(childNodeSize() - 1); \
-        return ret; \
-    } \
-
-    CREATE_TEXT_BASED_NODE_METHOD(TextNode)
+    }
+        
     CREATE_TEXT_BASED_NODE_METHOD(DataNode)
     CREATE_TEXT_BASED_NODE_METHOD(Comment)
-
+    CREATE_TEXT_BASED_NODE_METHOD(TextNode)
+        
+    protected:
+        Element(NodeTypeEnum nodeType, const StringRef& tagName, const StringRef& baseUri, Allocator* allocator) :
+        Node(nodeType, NULL, 0, baseUri, allocator) {
+            CSOUP_ASSERT(Tag::isKnownTag(tagName));
+            CSOUP_ASSERT(nodeType == CSOUP_NODE_FORMELEMENT || nodeType == CSOUP_NODE_DOCUMENT);
+            
+            tag_ = Tag::valueOf(tagName);
+            attributes_ = NULL;
+            childNodes_ =  NULL;
+            classes_ = NULL;
+        }
+        
+        Element(NodeTypeEnum nodeType, const StringRef& tagName, const Attributes& attributes, const StringRef& baseUri, Allocator* allocator) :
+        Node(nodeType, NULL, 0, baseUri, allocator) {
+            CSOUP_ASSERT(Tag::isKnownTag(tagName));
+            CSOUP_ASSERT(nodeType == CSOUP_NODE_FORMELEMENT || nodeType == CSOUP_NODE_DOCUMENT);
+            
+            tag_ = Tag::valueOf(tagName);
+            attributes_ = new (allocator->malloc_t<Attributes>()) Attributes(attributes, allocator);
+            childNodes_ =  NULL;
+            classes_ = NULL;
+        }
+        
     private:
         // to be conitnued;
-        Node* addChild(size_t index) {
+        Node** insert(size_t index) {
             return ensureChildNodes()->insert(index);
         }
         
-        Node* appendChild() {
+        Node** append() {
             return ensureChildNodes()->push();
         }
         
         Attributes* ensureAttributes() {
-            if (!element().attributes_) {
-                element().attributes_ = allocator()->malloc_t<Attributes>();
-                new (element().attributes_) Attributes(allocator());
+            if (!attributes_) {
+                attributes_ = allocator()->malloc_t<Attributes>();
+                new (attributes_) Attributes(allocator());
             }
             
-            return element().attributes_;
+            return attributes_;
         }
         
-        internal::Vector<Node>* ensureChildNodes() {
-            if (!element().childNodes_) {
-                element().childNodes_ = allocator()->malloc_t< internal::Vector<Node> >();
-                new (element().childNodes_) internal::Vector<Node>(4, allocator());
+        internal::Vector<Node*>* ensureChildNodes() {
+            if (!childNodes_) {
+                childNodes_ = allocator()->malloc_t< internal::Vector<Node*> >();
+                new (childNodes_) internal::Vector<Node*>(4, allocator());
             }
             
-            return element().childNodes_;
+            return childNodes_;
         }
         
         void reindexChildren(size_t from = 0) {
@@ -260,12 +317,31 @@ namespace csoup {
             const size_t countOfChildren = childNodeSize();
             
             for (size_t i = from; i < countOfChildren; ++ i) {
-                element().childNodes_->at(i)->setSiblingIndex(i);
+                (*childNodes_->at(i))->setSiblingIndex(i);
             }
         }
+        
+        static void accumulateParents(Element* ele, ElementsRef* output);
+        
+        static bool isElementNode(Node* node) {
+            if (node == NULL) {
+                return false;
+            }
+            
+            return node->type() == CSOUP_NODE_ELEMENT ||
+                    node->type() == CSOUP_NODE_DOCUMENT ||
+                    node->type() == CSOUP_NODE_FORMELEMENT;
+        }
+        
+        friend class Node;
+    private:
+        Tag* tag_;
+        internal::Vector<StringRef>* classes_;
+        
+        Attributes* attributes_;
+        internal::Vector<Node*>* childNodes_;
     };
     
-    CSOUP_STATIC_ASSERT(sizeof(Element) == sizeof(Node));
 }
 
 #endif

@@ -7,41 +7,43 @@
 namespace csoup {
     class Comment : public Node {
     public:
-        Comment(const StringRef& comment, Allocator* allocator) :
-            Node(CSOUP_NODE_COMMENT, NULL, 0, allocator) {
+        Comment(const StringRef& comment, const StringRef& baseUri, Allocator* allocator) :
+            Node(CSOUP_NODE_COMMENT, NULL, 0, baseUri, allocator) {
             setComment(comment);
         }
         
-        Comment(Allocator* allocator) : Node(CSOUP_NODE_COMMENT, NULL, 0, allocator) {
-            text().text_ = NULL;
+        Comment(const StringRef& baseUri, Allocator* allocator) : Node(CSOUP_NODE_COMMENT, NULL, 0, baseUri, allocator) {
+            comment_ = NULL;
         }
         
         ~Comment() {
-            if (text().text_) {
-                text().text_->~String();
-                allocator()->free(text().text_);
-                text().text_ = NULL;
+            if (comment_) {
+                comment_->~String();
+                allocator()->free(comment_);
+                comment_ = NULL;
             }
         }
         
         void setComment(const StringRef& data) {
-            if (text().text_) {
-                text().text_->~String();
+            if (comment_) {
+                comment_->~String();
             } else {
-                text().text_ = allocator()->malloc_t<String>();
+                comment_ = allocator()->malloc_t<String>();
             }
             
-            new (text().text_) String(data, allocator());
+            new (comment_) String(data, allocator());
         }
         
         StringRef comment() {
-            return text().text_ ? text().text_->ref() : StringRef("");
+            return comment_ ? comment_->ref() : StringRef("");
         }
         
         // Create a new DataNode from HTML encoded data.
+    private:
+        String* comment_;
     };
     
-    CSOUP_STATIC_ASSERT(sizeof(Comment) == sizeof(Node));
+
 }
 
 #endif

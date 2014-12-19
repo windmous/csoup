@@ -21,4 +21,29 @@ namespace csoup {
             return parentNode()->ownerDocument();
         }
     }
+    
+    Element* Node::parentNode() {
+        if (!parent_) return NULL;
+        CSOUP_ASSERT(Element::isElementNode(parent_));
+        return (Element*)parent_;
+    }
+    
+    void Node::removeFromParent(bool del) {
+        Element* parent = parentNode();
+        parent->removeChild(this, del);
+    }
+    
+    void Node::setParentNode(csoup::Node *parent) {
+        CSOUP_ASSERT(parent == NULL || Element::isElementNode(parent));
+        CSOUP_ASSERT(parentNode() == NULL);
+        parent_ = parent;
+    }
+    
+    void Node::after(csoup::Node *node) {
+        parentNode()->insertNode(siblingIndex(), node);
+    }
+    
+    void Node::before(csoup::Node *node) {
+        parentNode()->insertNode(siblingIndex() + 1, node);
+    }
 }

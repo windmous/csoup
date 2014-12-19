@@ -7,6 +7,7 @@ namespace csoup {
     class Document : public Element {
     public:
         Document(const StringRef& baseUri, Allocator* allocator = NULL);
+        Document(const StringRef& baseUri, const Attributes& attributes, Allocator* allocator = NULL);
         ~Document();
         
         Element* head() {

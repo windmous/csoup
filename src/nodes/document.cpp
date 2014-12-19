@@ -13,7 +13,18 @@
 
 namespace csoup {
     Document::Document(const StringRef& baseUri, Allocator* allocator) :
-    Element(CSOUP_NAMESPACE_HTML, CSOUP_TAG_HTML, NULL, allocator ? allocator : new MemoryPoolAllocator()),
+    Element(CSOUP_NODE_DOCUMENT, "html", baseUri, allocator ? allocator : new MemoryPoolAllocator()),
+    quirksMode_(CSOUP_DOCTYPE_NO_QUIRKS), ownAllocator_(NULL), publicIdentifier_(NULL),
+    systemIdentifier_(NULL), name_(NULL), baseUri_(NULL) {
+        if (allocator == NULL) {
+            ownAllocator_ = Element::allocator();
+        }
+        
+        baseUri_ = new (Node::allocator()->malloc_t<String>()) String(baseUri, Node::allocator());
+    }
+    
+    Document::Document(const StringRef& baseUri, const Attributes& attributes, Allocator* allocator) :
+    Element(CSOUP_NODE_DOCUMENT, "html", attributes, baseUri, allocator ? allocator : new MemoryPoolAllocator()),
     quirksMode_(CSOUP_DOCTYPE_NO_QUIRKS), ownAllocator_(NULL), publicIdentifier_(NULL),
     systemIdentifier_(NULL), name_(NULL), baseUri_(NULL) {
         if (allocator == NULL) {

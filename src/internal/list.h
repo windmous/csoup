@@ -149,8 +149,8 @@ namespace csoup {
             };
             
             ListNode* createNode(const T& obj) {
-                ListNode* ret = allocator_->malloc(sizeof(ListNode));
-                ret->data_ = allocator_->malloc(sizeof(ListNode));
+                ListNode* ret = allocator_->malloc_t<ListNode>();
+                ret->data_ = reinterpret_cast<T*>(allocator_->malloc(sizeof(T)));
                 
                 new (ret) ListNode();
                 new (ret->data_) T(obj);

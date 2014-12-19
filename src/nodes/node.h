@@ -2,87 +2,68 @@
 #define CSOUP_NODE_H_
 
 #include "../internal/nodedata.h"
+#include "../util/stringref.h"
 
 namespace csoup {
     class Document;
+    class Element;
     
     class Node {
     public:
-        Node(NodeTypeEnum type, Node* parent, size_t siblingIndex, Allocator* allocator) : data_(type, parent, siblingIndex, allocator) {
-            
+        Node(NodeTypeEnum type, Node* parent, size_t siblingIndex, const StringRef& baseUri, Allocator* allocator)
+        : type_(type), parent_(parent), siblingIndex_(siblingIndex), baseUri_(baseUri), allocator_(allocator) {
+            CSOUP_ASSERT(allocator != NULL);
         }
+        
         virtual ~Node() = 0;
         
         size_t siblingIndex() const {
-            return data_.siblingIndex_;
+            return siblingIndex_;
         }
         
         NodeTypeEnum type() const {
-            return data_.type_;
+            return type_;
         }
         
         Allocator* allocator() {
-            return data_.allocator_;
+            return allocator_;
         }
         
-        Node* parentNode() {
-            return data_.parent_;
-        }
+        Element* parentNode();
         
         const Node* parentNode() const {
-            return data_.parent_;
+            return parent_;
         }
+        
+        StringRef baseUri() const {
+            return baseUri_;
+        }
+        
+        void before(Node* node);
+        void after(Node* node);
         
         // Gets the Document associated with this Node.
         Document* ownerDocument() const;
         
+        void removeFromParent(bool del);
+        
     protected:
-        internal::NodeData& data() {
-            return data_;
-        }
-        
-        const internal::NodeData& data() const {
-            return data_;
-        }
-        
-        internal::ElementData& element() {
-            return data_.v_.element_;
-        }
-        
-        const internal::ElementData& element() const{
-            return data_.v_.element_;
-        }
-
-//        internal::DocumentData& document() {
-//            return data_.v_.doc_;
-//        }
-//        
-//        const internal::DocumentData& document() const {
-//            return data_.v_.doc_;
-//        }
-        
-        internal::TextNodeData& text() {
-            return data_.v_.text_;
-        }
-        
-        const internal::TextNodeData& text() const {
-            return data_.v_.text_;
-        }
-
         void setSiblingIndex(size_t index) {
-            data_.siblingIndex_ = index;
+            siblingIndex_ = index;
         }
         
-        void setParentNode(Node* parent) {
-            CSOUP_ASSERT(parent != NULL &&
-                (parent->type() == CSOUP_NODE_ELEMENT || parent->type() == CSOUP_NODE_DOCUMENT));
-            CSOUP_ASSERT(parentNode() == NULL);
-            data_.parent_ = parent;
-        }
+        void setParentNode(Node* parent);
         
         friend class Element;
-    private:
-        internal::NodeData data_;
+        
+        NodeTypeEnum type_;
+        
+        // This is a weak reference to parent node; Don't try to release this node;
+        Node* parent_;
+        size_t siblingIndex_;
+        
+        StringRef baseUri_;
+        Allocator* allocator_;
     };
     
     inline Node::~Node() {

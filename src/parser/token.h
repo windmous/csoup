@@ -205,9 +205,9 @@ namespace csoup {
             return tagName_->ref();
         }
         
-        TagEnum tag() const {
+        Tag* tag() const {
             CSOUP_ASSERT(tagName_ != NULL);
-            return tagEnumFromText(tagName_->data());
+            return Tag::valueOf(tagName());
         }
         
         bool selfClosing() const {
