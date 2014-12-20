@@ -200,6 +200,10 @@ namespace csoup {
             }
         }
         
+        StringRef attribute(const StringRef& key) const {
+            return attributes_ ? attributes_->get(key) : StringRef("");
+        }
+        
         StringRef tagName() const {
             CSOUP_ASSERT(tagName_ != NULL);
             return tagName_->ref();

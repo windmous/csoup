@@ -8,13 +8,13 @@ namespace csoup {
     
     class FormElement : public Element {
     public:
-        FormElement(const StringRef& baseUri, Allocator* allocator) :
-        Element(CSOUP_NODE_FORMELEMENT, "form", baseUri, allocator), elements_(NULL) {
+        FormElement(const StringRef& tagName, const StringRef& baseUri, Allocator* allocator) :
+        Element(CSOUP_NODE_FORMELEMENT, tagName, baseUri, allocator), elements_(NULL) {
             
         }
         
-        FormElement(const StringRef& baseUri, const Attributes& attributes, Allocator* allocator) :
-        Element(CSOUP_NODE_FORMELEMENT, "form", attributes, baseUri, allocator), elements_(NULL) {
+        FormElement(const StringRef& tagName, const Attributes& attributes, const StringRef& baseUri, Allocator* allocator) :
+        Element(CSOUP_NODE_FORMELEMENT, tagName, attributes, baseUri, allocator), elements_(NULL) {
             
         }
         

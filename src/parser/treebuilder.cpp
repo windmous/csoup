@@ -50,7 +50,7 @@ namespace csoup {
         
         reader_ = new (allocator->malloc_t<CharacterReader>()) CharacterReader(input);
         tokeniser_ = new (allocator->malloc_t<Tokeniser>()) Tokeniser(reader_, errors, allocator);
-        stack_ = new (allocator->malloc_t< internal::List<Element*> >()) internal::List<Element*>(allocator);
+        stack_ = new (allocator->malloc_t< internal::Vector<Element*> >()) internal::Vector<Element*>(4, allocator);
         baseUri_ = new (allocator->malloc_t< String>()) String(baseUri, allocator);
         allocator_ = allocator;
         currentToken_ = NULL;
@@ -66,7 +66,7 @@ namespace csoup {
         allocator_->deconstructAndFree(reader_);            reader_         = NULL;
         allocator_->deconstructAndFree(tokeniser_);         tokeniser_      = NULL;
         allocator_->deconstructAndFree(stack_);             stack_          = NULL;
-        allocator_->deconstructAndFree(baseUri_)            baseUri_        = NULL;
+        allocator_->deconstructAndFree(baseUri_);            baseUri_        = NULL;
         if (currentToken_) {
             allocator_->deconstructAndFree(currentToken_);  currentToken_   = NULL;
         }
@@ -99,5 +99,9 @@ namespace csoup {
     
     Element* TreeBuilder::currentElement() {
         return *stack_->back();
+    }
+    
+    StringRef TreeBuilder::baseUri() const {
+        return baseUri_ ? baseUri_->ref() : StringRef("");
     }
 }

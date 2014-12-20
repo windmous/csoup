@@ -13,6 +13,7 @@
 #include "tokeniserstate.h"
 #include "document.h"
 #include "tokeniser.h"
+#include "../nodes/formelement.h"
 #include "../internal/list.h"
 
 namespace csoup {
@@ -59,7 +60,7 @@ namespace csoup {
         CSOUP_DELETE(allocator_, token_);
     }
     
-    StringRef const HtmlTreeBuilderState::NULLString_ = "\x00";
+    StringRef const HtmlTreeBuilderState::nullString_ = "\x00";
     
     bool HtmlTreeBuilderState::isWhitespace(csoup::Token *t) {
         if (t->tokenType() == CSOUP_TOKEN_CHARACTER) {
@@ -86,9 +87,38 @@ namespace csoup {
         
     }
     
+    bool HtmlTreeBuilderState::processExtraToken(csoup::Token *token, csoup::HtmlTreeBuilder *tb) {
+        bool ret = tb->process(token);
+        CSOUP_DELETE(tb->allocator(), token);
+        return ret;
+    }
+    
+    bool HtmlTreeBuilderState::processExtraEndTagToken(const StringRef &tagName, HtmlTreeBuilder *tb) {
+        EndTagToken* endToken = CSOUP_NEW2(tb->allocator(), EndTagToken, tagName, tb->allocator());
+        bool ret = tb->process(endToken);
+        CSOUP_DELETE(tb->allocator(), endToken);
+        
+        return ret;
+    }
+    
+    bool HtmlTreeBuilderState::processExtraStartTagToken(const StringRef &tagName, HtmlTreeBuilder *tb) {
+        StartTagToken* startToken = CSOUP_NEW2(tb->allocator(), StartTagToken, tagName, tb->allocator());
+        bool ret = tb->process(startToken);
+        CSOUP_DELETE(tb->allocator(), startToken);
+        
+        return ret;
+    }
+    
+    bool HtmlTreeBuilderState::processExtraCharToken(const StringRef& data, HtmlTreeBuilder* tb) {
+        CharacterToken* charToken = CSOUP_NEW2(tb->allocator(), CharacterToken, data, tb->allocator());
+        bool ret = tb->process(charToken);
+        CSOUP_DELETE(tb->allocator(), charToken);
+        
+        return ret;
+    }
     
     bool Initial::process(Token* t, HtmlTreeBuilder* tb) {
-        TokenDeleter tokenDeleter(t, tb->allocator());
+        //TokenDeleter tokenDeleter(t, tb->allocator());
         
         if (isWhitespace(t)) {
             return true; // ignore whitespace
@@ -115,12 +145,12 @@ namespace csoup {
     }
     
     bool BeforeHtml::process(Token* t, HtmlTreeBuilder* tb) {
-        TokenDeleter tokenDeleter(t, tb->allocator());
+        //TokenDeleter tokenDeleter(t, tb->allocator());
         
         if (t->isDoctypeToken()) {
             tb->error(this);
             return false;
-        } else if (t->asCommentToken()) {
+        } else if (t->isCommentToken()) {
             tb->insert(t->asCommentToken());
         } else if (isWhitespace(t)) {
             return true; // ignore whitespace
@@ -144,11 +174,11 @@ namespace csoup {
 
     
     bool BeforeHead::process(Token* t, HtmlTreeBuilder* tb) {
-        TokenDeleter tokenDeleter(t, tb->allocator());
+        //TokenDeleter tokenDeleter(t, tb->allocator());
         
         if (isWhitespace(t)) {
             return true;
-        } else if (t->asCommentToken()) {
+        } else if (t->isCommentToken()) {
             tb->insert(t->asCommentToken());
         } else if (t->isDoctypeToken()) {
             tb->error(this);
@@ -157,16 +187,16 @@ namespace csoup {
             return InBody::instance()->process(t, tb); // does not transition
         } else if (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("head")) {
             Element* head = tb->insert(t->asStartTagToken());
-            tb->setHeadElement(head);
+            tb->setHeadElement(head, false);
             tb->transition(InHead::instance());
         } else if (t->isEndTagToken() && (StringUtil::in(t->asEndTagToken()->tagName(), "head", "body", "html", "br"))) {
-            tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "head", tb->allocator()));
+            processExtraStartTagToken("head", tb);
             return tb->process(t);
         } else if (t->isEndTagToken()) {
             tb->error(this);
             return false;
         } else {
-            tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "head", tb->allocator()));
+            processExtraStartTagToken("head", tb);
             return tb->process(t);
         }
         return true;
@@ -174,12 +204,12 @@ namespace csoup {
     
 #define INHEAD_STATE_ANYTHINGELSE \
     do { \
-        tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "head", tb->allocator())); \
+        processExtraStartTagToken("head", tb); \
         return tb->process(t); \
     } while(false)
 
     bool InHead::process(Token* t, HtmlTreeBuilder* tb) {
-       TokenDeleter tokenDeleter(t, tb->allocator());
+       //TokenDeleter tokenDeleter(t, tb->allocator());
        
        if (isWhitespace(t)) {
            tb->insert(t->asCharacterToken());
@@ -203,7 +233,7 @@ namespace csoup {
                    if (name.equals("base") && el->hasAttribute("href"))
                        tb->maybeSetBaseUri(el);
                } else if (name.equals("meta")) {
-                   Element* meta = tb->insertEmpty(start);
+                   //Element* meta = tb->insertEmpty(start);
                    // todo: charset switches
                } else if (name.equals("title")) {
                    handleRcData(start, tb);
@@ -254,12 +284,12 @@ namespace csoup {
 #define IHEADNOSCRIPT_ANYTHINGELSE \
 do { \
     tb->error(this); \
-    tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "noscript", tb->allocator())); \
+    processExtraEndTagToken("noscript", tb); \
     return tb->process(t); \
 } while(false)
 
     bool InHeadNoscript::process(Token* t, HtmlTreeBuilder* tb) {
-       TokenDeleter tokenDeleter(t, tb->allocator());
+       //TokenDeleter tokenDeleter(t, tb->allocator());
        
        if (t->isDoctypeToken()) {
            tb->error(this);
@@ -286,17 +316,19 @@ do { \
 #undef IHEADNOSCRIPT_ANYTHINGELSE
 
     bool AfterHead::process(Token* t, HtmlTreeBuilder* tb) {
-       TokenDeleter tokenDeleter(t, tb->allocator());
+       //TokenDeleter tokenDeleter(t, tb->allocator());
        
        if (isWhitespace(t)) {
            tb->insert(t->asCharacterToken());
-       } else if (t->asCommentToken()) {
+       } else if (t->isCommentToken()) {
            tb->insert(t->asCommentToken());
        } else if (t->isDoctypeToken()) {
            tb->error(this);
        } else if (t->isStartTagToken()) {
            StartTagToken* startTag = t->asStartTagToken();
            StringRef name = startTag->tagName();
+           static const StringRef tagsInHead[] = {"base", "basefont", "bgsound", "link", "meta", "noframes", "script", "style", "title"};
+           
            if (name.equals(StringRef("html"))) {
                return tb->process(t, InBody::instance());
            } else if (name.equals("body")) {
@@ -306,23 +338,25 @@ do { \
            } else if (name.equals("frameset")) {
                tb->insert(startTag);
                tb->transition(InFrameset::instance());
-           } else if (StringUtil::in(name, "base", "basefont", "bgsound", "link", "meta", "noframes", "script", "style", "title")) {
+           } else if (StringUtil::in(name, tagsInHead, arrayLength(tagsInHead))) {
                tb->error(this);
+               
+               // temporarily add it to top of the stack and process, then remove it
                Element* head = tb->headElement();
                tb->push(head);
                tb->process(t, InHead::instance());
-               tb->removeFromStack(head);
+               tb->removeFromStack(head, false);
            } else if (name.equals("head")) {
                tb->error(this);
                return false;
            } else {
-               tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "body", tb->allocator()));
+               processExtraStartTagToken("body", tb);
                tb->setFramesetOk(true);
                return tb->process(t);
            }
        } else if (t->isEndTagToken()) {
            if (StringUtil::in(t->asEndTagToken()->tagName(), "body", "html")) {
-               tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "body", tb->allocator()));
+               processExtraStartTagToken("body", tb);
                tb->setFramesetOk(true);
                return tb->process(t);
            } else {
@@ -330,7 +364,8 @@ do { \
                return false;
            }
        } else {
-           tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "body", tb->allocator()));
+           processExtraStartTagToken("body", tb);
+
            tb->setFramesetOk(true);
            return tb->process(t);
        }
@@ -339,15 +374,17 @@ do { \
     
     bool InBodyAnyOtherEndTag(HtmlTreeBuilderState* state, Token* t, HtmlTreeBuilder* tb) {
         StringRef name = t->asEndTagToken()->tagName();
-        internal::List<Element>* stack = tb->stack();
-        internal::ListIterator<Element> it = stack->end();
-        while (it.valid()) {
-            Element* node = it.data();
+        internal::Vector<Element*>* stack = tb->stack();
+        internal::VectorIterator<Element*> it = stack->end();
+        while (it.hasPrevious()) {
+            it.previous();
+            
+            Element* node = *it.data();
             if (node->tagName().equals(name)) {
                 tb->generateImpliedEndTags(name);
                 if (!name.equals(tb->currentElement()->tagName()))
                     tb->error(state);
-                tb->popStackToClose(name);
+                tb->popStackToClose(false, name);
                 break;
             } else {
                 if (tb->isSpecial(node)) {
@@ -355,28 +392,25 @@ do { \
                     return false;
                 }
             }
-            
-            if (it.hasPrevious()) it.previous();
-            else break;
         }
         return true;
     }
 
     bool InBody::process(Token* t, HtmlTreeBuilder* tb) {
-       TokenDeleter tokenDeleter(t, tb->allocator());
+       //TokenDeleter tokenDeleter(t, tb->allocator());
        
        switch (t->tokenType()) {
            case CSOUP_TOKEN_CHARACTER: {
                CharacterToken* c = t->asCharacterToken();
-               if (c->data().equals(NULLString_)) {
+               if (c->data().equals(nullString_)) {
                    // todo confirm that check
                    tb->error(this);
                    return false;
                } else if (tb->framesetOk() && isWhitespace(c)) { // don't check if whitespace if frames already closed
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->insert(c);
                } else {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->insert(c);
                    tb->setFramesetOk(false);
                }
@@ -390,13 +424,13 @@ do { \
                tb->error(this);
                return false;
            }
-           case CSOUP_TOKEN_START_TAG:
+           case CSOUP_TOKEN_START_TAG: {
                StartTagToken* startTag = t->asStartTagToken();
                StringRef name = startTag->tagName();
                if (name.equals("html")) {
                    tb->error(this);
                    // merge attributes onto real html
-                   Element* html = tb->stack()->front();
+                   Element* html = *tb->stack()->front();
                    Attributes* attrsOfStartTag = startTag->attributes();
                    for (size_t i = 0; i < attrsOfStartTag->size(); ++ i) {
                        const Attribute* attr = attrsOfStartTag->get(i);
@@ -408,13 +442,13 @@ do { \
                    return tb->process(t, InHead::instance());
                } else if (name.equals("body")) {
                    tb->error(this);
-                   internal::List<Element>* stack = tb->stack();
-                   if (stack->size() == 1 || (stack->size() > 2 && !stack->at(1)->tagName().equals("body"))) {
+                   internal::Vector<Element*>* stack = tb->stack();
+                   if (stack->size() == 1 || (stack->size() > 2 && !(*stack->at(1))->tagName().equals("body"))) {
                        // only in fragment case
                        return false; // ignore
                    } else {
                        tb->setFramesetOk(false);
-                       Element* body = stack->at(1);
+                       Element* body = *stack->at(1);
                        
                        Attributes* attrsOfStartTag = startTag->attributes();
                        for (size_t i = 0; i < attrsOfStartTag->size(); ++ i) {
@@ -431,16 +465,17 @@ do { \
                    }
                } else if (name.equals("frameset")) {
                    tb->error(this);
-                   internal::List<Element>* stack = tb->stack();
-                   if (stack->size() == 1 || (stack->size() > 2 && !stack->at(1)->tagName().equals("body"))) {
+                   internal::Vector<Element*>* stack = tb->stack();
+                   if (stack->size() == 1 || (stack->size() > 2 && !(*stack->at(1))->tagName().equals("body"))) {
                        // only in fragment case
                        return false; // ignore
                    } else if (!tb->framesetOk()) {
                        return false; // ignore frameset
                    } else {
-                       Element* second = stack->at(1);
-                       if (second->parentNode() != NULL)
-                           second->remove();
+                       Element* second = *stack->at(1);
+                       if (second->parentNode() != NULL) {
+                           second->removeFromParent(true);
+                       }
                        // pop up to html element
                        while (stack->size() > 1)
                            stack->pop();
@@ -449,12 +484,12 @@ do { \
                    }
                } else if (StringUtil::in(name, Constants::InBodyStartPClosers, arrayLength(Constants::InBodyEndAdoptionFormatters))) {
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insert(startTag);
                } else if (StringUtil::in(name, Constants::Headings, arrayLength(Constants::Headings))) {
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    if (StringUtil::in(tb->currentElement()->tagName(), Constants::Headings, arrayLength(Constants::Headings))) {
                        tb->error(this);
@@ -463,29 +498,30 @@ do { \
                    tb->insert(startTag);
                } else if (StringUtil::in(name, Constants::InBodyStartPreListing, arrayLength(Constants::InBodyStartPreListing))) {
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insert(startTag);
                    // todo: ignore LF if next token
                    tb->setFramesetOk(false);
                } else if (name.equals("form")) {
-//                   if (tb->getFormElement() != NULL) {
-//                       tb->error(this);
-//                       return false;
-//                   }
+                   if (tb->formElement() != NULL) {
+                       tb->error(this);
+                       return false;
+                   }
+                   
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    
                    tb->insert(startTag);
-//                   tb->insertForm(startTag, true);
+                   tb->insertForm(startTag, true);
                } else if (name.equals("li")) {
                    tb->setFramesetOk(false);
-                   internal::List<Element>* stack = tb->stack();
-                   for (int i = stack->size() - 1; i > 0; i--) {
-                       Element* el = stack->at(i);
+                   internal::Vector<Element*>* stack = tb->stack();
+                   for (size_t i = stack->size(); i > 1; i--) {
+                       Element* el = *stack->at(i - 1);
                        if (el->tagName().equals("li")) {
-                           tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "li", tb->allocator()));
+                           processExtraEndTagToken("li", tb);
                            break;
                        }
                        if (tb->isSpecial(el) && !StringUtil::in(el->tagName(), Constants::InBodyStartLiBreakers,
@@ -493,16 +529,17 @@ do { \
                            break;
                    }
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insert(startTag);
                } else if (StringUtil::in(name, Constants::DdDt, arrayLength(Constants::DdDt))) {
                    tb->setFramesetOk(false);
-                   internal::List<Element>* stack = tb->stack();
-                   for (int i = stack->size() - 1; i > 0; i--) {
-                       Element* el = stack->at(i);
+                   internal::Vector<Element*>* stack = tb->stack();
+                   for (size_t i = stack->size(); i > 1; i--) {
+                       Element* el = *stack->at(i - 1);
                        if (StringUtil::in(el->tagName(), Constants::DdDt, arrayLength(Constants::DdDt))) {
-                           tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, el->tagName(), tb->allocator()));
+                           processExtraEndTagToken(el->tagName(), tb);
+                           
                            break;
                        }
                        if (tb->isSpecial(el) && !StringUtil::in(el->tagName(), Constants::InBodyStartLiBreakers,
@@ -510,12 +547,12 @@ do { \
                            break;
                    }
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insert(startTag);
                } else if (name.equals("plaintext")) {
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insert(startTag);
                    tb->setTokeniserState(internal::PlainText::instance()); // once in, never gets out
@@ -523,60 +560,64 @@ do { \
                    if (tb->inButtonScope("button")) {
                        // close and reprocess
                        tb->error(this);
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "button", tb->allocator()));
+                       processExtraEndTagToken("button", tb);
+                       
                        tb->process(startTag);
                    } else {
-                       tb->reconstructFormattingElements();
+                       tb->reconstructFormattingElements(false);
                        tb->insert(startTag);
                        tb->setFramesetOk(false);
                    }
                } else if (name.equals("a")) {
                    if (tb->getActiveFormattingElement("a") != NULL) {
                        tb->error(this);
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "a", tb->allocator()));
+                       
+                       processExtraEndTagToken("a", tb);
                        
                        // still on stack?
                        Element* remainingA = tb->getFromStack("a");
                        if (remainingA != NULL) {
-                           tb->removeFromActiveFormattingElements(remainingA);
-                           tb->removeFromStack(remainingA);
+                           tb->removeFromActiveFormattingElements(remainingA, false);
+                           tb->removeFromStack(remainingA, false);
                        }
                    }
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    Element* a = tb->insert(startTag);
-                   tb->pushActiveFormattingElements(a);
+                   tb->pushActiveFormattingElements(a, false);
                } else if (StringUtil::in(name, Constants::Formatters, arrayLength(Constants::Formatters))) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    Element* el = tb->insert(startTag);
-                   tb->pushActiveFormattingElements(el);
+                   tb->pushActiveFormattingElements(el, false);
                } else if (name.equals("nobr")) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    if (tb->inScope("nobr")) {
                        tb->error(this);
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "nobr", tb->allocator()));
-                       tb->reconstructFormattingElements();
+                       
+                       processExtraEndTagToken("nobr", tb);
+                       
+                       tb->reconstructFormattingElements(false);
                    }
                    Element* el = tb->insert(startTag);
-                   tb->pushActiveFormattingElements(el);
+                   tb->pushActiveFormattingElements(el, false);
                } else if (StringUtil::in(name, Constants::InBodyStartApplets,arrayLength(Constants::InBodyStartApplets))) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->insert(startTag);
                    tb->insertMarkerToFormattingElements();
                    tb->setFramesetOk(false);
                } else if (name.equals("table")) {
                    if (tb->document()->quirksMode() != CSOUP_DOCTYPE_QUIRKS && tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insert(startTag);
                    tb->setFramesetOk(false);
                    tb->transition(InTable::instance());
                } else if (StringUtil::in(name, Constants::InBodyStartEmptyFormatters,
                                          arrayLength(Constants::InBodyStartEmptyFormatters))) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->insertEmpty(startTag);
                    tb->setFramesetOk(false);
                } else if (name.equals("input")) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    Element* el = tb->insertEmpty(startTag);
                    if (!el->attr("type").equalsIgnoreCase("hidden"))
                        tb->setFramesetOk(false);
@@ -584,7 +625,7 @@ do { \
                    tb->insertEmpty(startTag);
                } else if (name.equals("hr")) {
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
                    tb->insertEmpty(startTag);
                    tb->setFramesetOk(false);
@@ -597,23 +638,24 @@ do { \
                } else if (name.equals("isindex")) {
                    // how much do we care about the early 90s?
                    tb->error(this);
-                   //if (tb->getFormElement() != NULL)
-                   //    return false;
+                   if (tb->formElement() != NULL)
+                       return false;
                    
                    tb->tokeniser()->setAcknowledgeSelfClosingFlag();
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "form", tb->allocator()));
+                   processExtraStartTagToken("form", tb);
                    if (startTag->attributes()->hasAttribute("action")) {
-                       //Element* form = tb->getFormElement();
-                       //form.attr("action", startTag.attributes.get("action"));
+                       Element* form = tb->formElement();
+                       form->addAttribute("action", startTag->attribute("action"));
                    }
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "hr", tb->allocator()));
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "label", tb->allocator()));
+                   
+                   processExtraStartTagToken("hr", tb);
+                   processExtraStartTagToken("label", tb);
                    // hope you like english.
                    StringRef prompt = startTag->attributes()->hasAttribute("prompt") ?
                                     startTag->attributes()->get("prompt") :
                                     "This is a searchable index. Enter search keywords: ";
                    
-                   tb->process(CSOUP_NEW2(tb->allocator(), CharacterToken, prompt, tb->allocator()));
+                   processExtraCharToken(prompt, tb);
                    
                    // input
                    Attributes inputAttribs(tb->allocator());
@@ -627,10 +669,11 @@ do { \
                    }
                  
                    inputAttribs.addAttribute("name", "isindex");
-                   tb->process(CSOUP_NEW3(tb->allocator(), StartTagToken, "input", inputAttribs, tb->allocator()));
-                   tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "label", tb->allocator()));
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "hr", tb->allocator()));
-                   tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "form", tb->allocator()));
+                   
+                   processExtraToken(CSOUP_NEW3(tb->allocator(), StartTagToken, "input", inputAttribs, tb->allocator()), tb);
+                   processExtraEndTagToken("label", tb);
+                   processExtraStartTagToken("hr", tb);
+                   processExtraEndTagToken("form", tb);
                } else if (name.equals("textarea")) {
                    tb->insert(startTag);
                    // todo: If the next token is a U+000A LINE FEED (LF) character token, then ignore that token and move on to the next one. (Newlines at the start of textarea elements are ignored as an authoring convenience.)
@@ -640,9 +683,9 @@ do { \
                    tb->transition(Text::instance());
                } else if (name.equals("xmp")) {
                    if (tb->inButtonScope("p")) {
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "p", tb->allocator()));
+                       processExtraEndTagToken("p", tb);
                    }
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->setFramesetOk(false);
                    handleRawtext(startTag, tb);
                } else if (name.equals("iframe")) {
@@ -652,7 +695,7 @@ do { \
                    // also handle noscript if script enabled
                    handleRawtext(startTag, tb);
                } else if (name.equals("select")) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->insert(startTag);
                    tb->setFramesetOk(false);
                    
@@ -663,25 +706,25 @@ do { \
                        tb->transition(InSelect::instance());
                } else if (StringUtil::in(name, Constants::InBodyStartOptions, arrayLength(Constants::InBodyStartOptions))) {
                    if (tb->currentElement()->tagName().equals("option"))
-                       tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "option", tb->allocator()));
-                   tb->reconstructFormattingElements();
+                       processExtraEndTagToken("option", tb);
+                   tb->reconstructFormattingElements(false);
                    tb->insert(startTag);
                } else if (StringUtil::in(name, Constants::InBodyStartRuby, arrayLength(Constants::InBodyStartRuby))) {
                    if (tb->inScope("ruby")) {
-                       tb->generateImpliedEndTags();
+                       tb->generateImpliedEndTags(false);
                        if (!tb->currentElement()->tagName().equals("ruby")) {
                            tb->error(this);
-                           tb->popStackToBefore("ruby"); // i.e. close up to but not include name
+                           tb->popStackToBefore(false, "ruby"); // i.e. close up to but not include name
                        }
                        tb->insert(startTag);
                    }
                } else if (name.equals("math")) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    // todo: handle A start tag whose tag name is "math" (i.e. foreign, mathml)
                    tb->insert(startTag);
                    tb->tokeniser()->setAcknowledgeSelfClosingFlag();
                } else if (name.equals("svg")) {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    // todo: handle A start tag whose tag name is "svg" (xlink, svg)
                    tb->insert(startTag);
                    tb->tokeniser()->setAcknowledgeSelfClosingFlag();
@@ -689,11 +732,11 @@ do { \
                    tb->error(this);
                    return false;
                } else {
-                   tb->reconstructFormattingElements();
+                   tb->reconstructFormattingElements(false);
                    tb->insert(startTag);
                }
                break;
-               
+           }
            case CSOUP_TOKEN_END_TAG: {
                EndTagToken* endTag = t->asEndTagToken();
                StringRef name = endTag->tagName();
@@ -706,7 +749,7 @@ do { \
                        tb->transition(AfterBody::instance());
                    }
                } else if (name.equals("html")) {
-                   bool notIgnored = tb->process(CSOUP_NEW2(tb->allocator(), EndTagToken, "body", tb->allocator()));
+                   bool notIgnored = processExtraEndTagToken("body", tb);
                    if (notIgnored)
                        return tb->process(endTag);
                } else if (StringUtil::in(name, Constants::InBodyEndClosers, arrayLength(Constants::InBodyEndClosers))) {
@@ -715,34 +758,34 @@ do { \
                        tb->error(this);
                        return false;
                    } else {
-                       tb->generateImpliedEndTags();
+                       tb->generateImpliedEndTags(false);
                        if (!tb->currentElement()->tagName().equals(name))
                            tb->error(this);
-                       tb->popStackToClose(name);
+                       tb->popStackToClose(false, name);
                    }
                } else if (name.equals("form")) {
-//                   Element* currentForm = tb->getFormElement();
-//                   tb->setFormElement(NULL);
-//                   if (currentForm == NULL || !tb->inScope(name)) {
-//                       tb->error(this);
-//                       return false;
-//                   } else {
-//                       tb->generateImpliedEndTags();
-//                       if (!tb->currentElement()->tagName().equals(name))
-//                           tb->error(this);
-//                       // remove currentForm from stack-> will shift anything under up.
-//                       tb->removeFromStack(currentForm);
-//                   }
+                   Element* currentForm = tb->formElement();
+                   tb->setFormElement(NULL, false);
+                   if (currentForm == NULL || !tb->inScope(name)) {
+                       tb->error(this);
+                       return false;
+                   } else {
+                       tb->generateImpliedEndTags(false);
+                       if (!tb->currentElement()->tagName().equals(name))
+                           tb->error(this);
+                       // remove currentForm from stack-> will shift anything under up.
+                       tb->removeFromStack(currentForm, false);
+                   }
                } else if (name.equals("p")) {
                    if (!tb->inButtonScope(name)) {
                        tb->error(this);
-                       tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, name, tb->allocator())); // if no p to close, creates an empty <p></p>
+                       processExtraStartTagToken(name, tb); // if no p to close, creates an empty <p></p>
                        return tb->process(endTag);
                    } else {
                        tb->generateImpliedEndTags(name);
                        if (!tb->currentElement()->tagName().equals(name))
                            tb->error(this);
-                       tb->popStackToClose(name);
+                       tb->popStackToClose(false, name);
                    }
                } else if (name.equals("li")) {
                    if (!tb->inListItemScope(name)) {
@@ -752,7 +795,7 @@ do { \
                        tb->generateImpliedEndTags(name);
                        if (!tb->currentElement()->tagName().equals(name))
                            tb->error(this);
-                       tb->popStackToClose(name);
+                       tb->popStackToClose(false, name);
                    }
                } else if (StringUtil::in(name, Constants::DdDt, arrayLength(Constants::DdDt))) {
                    if (!tb->inScope(name)) {
@@ -762,7 +805,7 @@ do { \
                        tb->generateImpliedEndTags(name);
                        if (!tb->currentElement()->tagName().equals(name))
                            tb->error(this);
-                       tb->popStackToClose(name);
+                       tb->popStackToClose(false, name);
                    }
                } else if (StringUtil::in(name, Constants::Headings, arrayLength(Constants::Headings))) {
                    if (!tb->inScope(Constants::Headings, arrayLength(Constants::Headings))) {
@@ -772,7 +815,7 @@ do { \
                        tb->generateImpliedEndTags(name);
                        if (!tb->currentElement()->tagName().equals(name))
                            tb->error(this);
-                       tb->popStackToClose(Constants::Headings, arrayLength(Constants::Headings));
+                       tb->popStackToClose(false, Constants::Headings, arrayLength(Constants::Headings));
                    }
                } else if (name.equals("sarcasm")) {
                    // *sigh*
@@ -786,7 +829,7 @@ do { \
                            return InBodyAnyOtherEndTag(this, t, tb);
                        else if (!tb->onStack(formatEl)) {
                            tb->error(this);
-                           tb->removeFromActiveFormattingElements(formatEl);
+                           tb->removeFromActiveFormattingElements(formatEl, false);
                            return true;
                        } else if (!tb->inScope(formatEl->tagName())) {
                            tb->error(this);
@@ -797,14 +840,14 @@ do { \
                        Element* furthestBlock = NULL;
                        Element* commonAncestor = NULL;
                        bool seenFormattingElement = false;
-                       internal::List<Element>* stack = tb->stack();
+                       internal::Vector<Element*>* stack = tb->stack();
                        // the spec doesn't limit to < 64, but in degenerate cases (9000+ stack depth) this prevents
                        // run-aways
                        const size_t stackSize = stack->size();
                        for (size_t si = 0; si < stackSize && si < 64; si++) {
-                           Element* el = stack->at(si);
+                           Element* el = *stack->at(si);
                            if (el == formatEl) {
-                               commonAncestor = stack->at(si - 1);
+                               commonAncestor = *stack->at(si - 1);
                                seenFormattingElement = true;
                            } else if (seenFormattingElement && tb->isSpecial(el)) {
                                furthestBlock = el;
@@ -812,8 +855,8 @@ do { \
                            }
                        }
                        if (furthestBlock == NULL) {
-                           tb->popStackToClose(formatEl->tagName());
-                           tb->removeFromActiveFormattingElements(formatEl);
+                           tb->popStackToClose(false, formatEl->tagName());
+                           tb->removeFromActiveFormattingElements(formatEl, false);
                            return true;
                        }
                        
@@ -826,64 +869,55 @@ do { \
                            if (tb->onStack(node))
                                node = tb->aboveOnStack(node);
                            if (!tb->isInActiveFormattingElements(node)) { // note no bookmark check
-                               tb->removeFromStack(node);
+                               tb->removeFromStack(node,false);
                                continue;
                            } else if (node == formatEl)
                                break;
   
-                           ///////////////////////////////////////////////////////////////////////////////
-                          ///////////////////////////////////////////////////////////////////////////////
-                           ///////////////////////////////////////////////////////////////////////////////
-                           ///////////////////////////////////////////////////////////////////////////////
-                           
-                           // Element* replacement = new Element(Tag.valueOf(node->tagName()), tb->getBaseUri());
-                           Element* replacement = NULL;
-                           tb->replaceActiveFormattingElement(node, replacement);
-                           tb->replaceOnStack(node, replacement);
+                           Element* replacement = CSOUP_NEW3(tb->allocator(), Element, node->tagName(), tb->baseUri(), tb->allocator());
+                           tb->replaceActiveFormattingElement(node, replacement, false);
+                           tb->replaceOnStack(node, replacement, false);
                            node = replacement;
                            
                            if (lastNode == furthestBlock) {
                                // todo: move the aforementioned bookmark to be immediately after the new node in the list of active formatting elements.
                                // not getting how this bookmark both straddles the element above, but is inbetween here...
                            }
-                           if (lastNode->parentNode() != NULL)
-                               lastNode->remove();
-                           
-                           //?????????????????????????????????????????????????????????????????????????
-                           //////////////////////////////////////////////////////////////////////
-                           //node->appendChild(lastNode);
-                           
+                           if (lastNode->parentNode() != NULL) {
+                               // don't destroy it ! we;ll
+                               lastNode->removeFromParent(false);
+                           }
+                           node->appendNode(lastNode);
                            lastNode = node;
                        }
-                   AFTER_INNER:
                        
                        if (StringUtil::in(commonAncestor->tagName(), Constants::InBodyEndTableFosters,
                                           arrayLength(Constants::InBodyEndTableFosters))) {
                            if (lastNode->parentNode() != NULL)
-                               lastNode->remove();
+                               lastNode->removeFromParent(false);
                            tb->insertInFosterParent(lastNode);
                        } else {
                            if (lastNode->parentNode() != NULL)
-                               lastNode->remove();
+                               lastNode->removeFromParent(false);
                            
-                           //////////////////////////////////////////////////////////////////
-                           //commonAncestor.appendChild(lastNode);
+                           commonAncestor->appendNode(lastNode);
                        }
                        
-                       //////////////////////////////////////////////////////////////
-                       //Element* adopter = new Element(formatEl.tag(), tb->getBaseUri());
-                       Element* adopter = NULL;
-                       //adopter.attributes().addAll(formatEl.attributes()); ?????????????????
+                       Element* adopter = CSOUP_NEW3(tb->allocator(), Element, formatEl->tagName(), tb->baseUri(), tb->allocator());
+                       adopter->addAttributes(*formatEl->attributes());
                        
-                      // Node[] childNodes = furthestBlock.childNodes().toArray(new Node[furthestBlock.childNodeSize()]);
-                      // for (Node childNode : childNodes) {
-                           //adopter->appendChild(childNode); // append will reparent. thus the clone to avoid concurrent mod.
-                      // }
-                       //furthestBlock.appendChild(adopter);
-                       //tb->removeFromActiveFormattingElements(formatEl);
+                       for (size_t i = formatEl->childNodeSize(); i > 0; -- i) {
+                           Node* c = formatEl->childNode(i - 1);
+                           c->removeFromParent(false);
+                           // This is very slow
+                           adopter->insertNode(0, c);
+                       }
+                       
+                       furthestBlock->appendNode(adopter);
+                       tb->removeFromActiveFormattingElements(formatEl, false);
                        // todo: insert the new element into the list of active formatting elements at the position of the aforementioned bookmark.
-                       //tb->removeFromStack(formatEl);
-                       //tb->insertOnStackAfter(furthestBlock, adopter);
+                       tb->removeFromStack(formatEl, false);
+                       tb->insertOnStackAfter(furthestBlock, adopter);
                    }
                //AFTER_OUTER:
                } else if (StringUtil::in(name, Constants::InBodyStartApplets, arrayLength(Constants::InBodyStartApplets))) {
@@ -892,15 +926,15 @@ do { \
                            tb->error(this);
                            return false;
                        }
-                       tb->generateImpliedEndTags();
+                       tb->generateImpliedEndTags(false);
                        if (!tb->currentElement()->tagName().equals(name))
                            tb->error(this);
-                       tb->popStackToClose(name);
-                       tb->clearFormattingElementsToLastMarker();
+                       tb->popStackToClose(false, name);
+                       tb->clearFormattingElementsToLastMarker(false);
                    }
                } else if (name.equals("br")) {
                    tb->error(this);
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "br", tb->allocator()));
+                   processExtraStartTagToken("br", tb);
                    return false;
                } else {
                    return InBodyAnyOtherEndTag(this, t, tb);
@@ -917,7 +951,7 @@ do { \
     }
 
     bool Text::process(Token* t, HtmlTreeBuilder* tb) {
-       TokenDeleter tokenDeleter(t, tb->allocator());
+       //TokenDeleter tokenDeleter(t, tb->allocator());
        
        if (t->isCharacterToken()) {
            tb->insert(t->asCharacterToken());
@@ -934,16 +968,29 @@ do { \
        }
        return true;
     }
-       
+    
+        bool InTableAnythingElse(HtmlTreeBuilderState* state, Token* t, HtmlTreeBuilder* tb) {
+            tb->error(state);
+            bool processed = true;
+            if (StringUtil::in(tb->currentElement()->tagName(), "table", "tbody", "tfoot", "thead", "tr")) {
+                tb->setFosterInserts(true);
+                processed = tb->process(t, InBody::instance());
+                tb->setFosterInserts(false);
+            } else {
+                processed = tb->process(t, InBody::instance());
+            }
+            return processed;
+        }
+    
        bool InTable::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (t->isCharacterToken()) {
-               tb->newPendingTableCharacters();
+               tb->newPendingTableCharacters(true);
                tb->markInsertionMode();
                tb->transition(InTableText::instance());
                return tb->process(t);
-           } else if (t->asCommentToken()) {
+           } else if (t->isCommentToken()) {
                tb->insert(t->asCommentToken());
                return true;
            } else if (t->isDoctypeToken()) {
@@ -953,164 +1000,163 @@ do { \
                StartTagToken* startTag = t->asStartTagToken();
                StringRef name = startTag->tagName();
                if (name.equals("caption")) {
-                   tb->clearStackToTableContext();
+                   tb->clearStackToTableContext(false);
                    tb->insertMarkerToFormattingElements();
                    tb->insert(startTag);
                    tb->transition(InCaption::instance());
                } else if (name.equals("colgroup")) {
-                   tb->clearStackToTableContext();
+                   tb->clearStackToTableContext(false);
                    tb->insert(startTag);
                    tb->transition(InColumnGroup::instance());
                } else if (name.equals("col")) {
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "colgroup", tb->allocator()));
+                   processExtraStartTagToken("colgroup", tb);
                    return tb->process(t);
                } else if (StringUtil::in(name, "tbody", "tfoot", "thead")) {
-                   tb->clearStackToTableContext();
+                   tb->clearStackToTableContext(false);
                    tb->insert(startTag);
                    tb->transition(InTableBody::instance());
                } else if (StringUtil::in(name, "td", "th", "tr")) {
-                   tb->process(CSOUP_NEW2(tb->allocator(), StartTagToken, "tbody", tb->allocator()));
+                   processExtraStartTagToken("tbody", tb);
                    return tb->process(t);
                } else if (name.equals("table")) {
                    tb->error(this);
-                   bool processed = tb->process(new Token.EndTag("table"));
+                   bool processed = processExtraEndTagToken("table", tb);
                    if (processed) // only ignored if in fragment
                        return tb->process(t);
                } else if (StringUtil::in(name, "style", "script")) {
-                   return tb->process(t, InHead);
+                   return tb->process(t, InHead::instance());
                } else if (name.equals("input")) {
-                   if (!startTag.attributes.get("type").equalsIgnoreCase("hidden")) {
-                       return anythingElse(t, tb);
+                   if (!startTag->attribute("type").equalsIgnoreCase("hidden")) {
+                       return InTableAnythingElse(this, t, tb);
                    } else {
                        tb->insertEmpty(startTag);
                    }
                } else if (name.equals("form")) {
                    tb->error(this);
-                   if (tb->getFormElement() != NULL)
+                   if (tb->formElement() != NULL)
                        return false;
                    else {
                        tb->insertForm(startTag, false);
                    }
                } else {
-                   return anythingElse(t, tb);
+                   return InTableAnythingElse(this, t, tb);
                }
                return true; // todo: check if should return processed http://www.whatwg.org/specs/web-apps/current-work/multipage/tree-construction.html#parsing-main-intable
            } else if (t->isEndTagToken()) {
                EndTagToken* endTag = t->asEndTagToken();
                StringRef name = endTag->tagName();
+               static const StringRef errTags[] = {"body", "caption", "col", "colgroup", "html", "tbody", "td", "tfoot", "th", "thead", "tr"};
                
                if (name.equals("table")) {
                    if (!tb->inTableScope(name)) {
                        tb->error(this);
                        return false;
                    } else {
-                       tb->popStackToClose("table");
+                       tb->popStackToClose(false, "table");
                    }
                    tb->resetInsertionMode();
-               } else if (StringUtil::in(name,
-                                        "body", "caption", "col", "colgroup", "html", "tbody", "td", "tfoot", "th", "thead", "tr")) {
+               } else if (StringUtil::in(name, errTags, arrayLength(errTags))) {
                    tb->error(this);
                    return false;
                } else {
-                   return anythingElse(t, tb);
+                   return InTableAnythingElse(this, t, tb);
                }
                return true; // todo: as above todo
-           } else if (t.isEOF()) {
+           } else if (t->isEOFToken()) {
                if (tb->currentElement()->tagName().equals("html"))
                    tb->error(this);
                return true; // stops parsing
            }
-           return anythingElse(t, tb);
-       }
-       
-       bool anythingElse(Token* t, HtmlTreeBuilder* tb) {
-           tb->error(this);
-           bool processed = true;
-           if (StringUtil::in(tb->currentElement().nodeName(), "table", "tbody", "tfoot", "thead", "tr")) {
-               tb->setFosterInserts(true);
-               processed = tb->process(t, InBody);
-               tb->setFosterInserts(false);
-           } else {
-               processed = tb->process(t, InBody);
-           }
-           return processed;
+           return InTableAnythingElse(this, t, tb);
        }
        
        bool InTableText::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            switch (t->tokenType()) {
-               case CSOUP_TOKEN_CHARACTER:
+               case CSOUP_TOKEN_CHARACTER: {
                    CharacterToken*c = t->asCharacterToken();
-                   if (c.getData().equals(NULLString_)) {
+                   if (c->data().equals(nullString_)) {
                        tb->error(this);
                        return false;
                    } else {
-                       tb->getPendingTableCharacters().add(c);
+                       CharacterToken* copy_c = CSOUP_NEW2(tb->allocator(), CharacterToken, c->data(), tb->allocator());
+                       tb->pendingTableCharacters()->push(copy_c);
                    }
                    break;
-               default:
-                   if (tb->getPendingTableCharacters().size() > 0) {
-                       for (CharacterToken*character : tb->getPendingTableCharacters()) {
+               }
+               default: {
+                   if (tb->pendingTableCharacters()->size() > 0) {
+                       const size_t len = tb->pendingTableCharacters()->size();
+                       for (size_t i = 0; i < len; ++ i) {
+                           CharacterToken* character = *tb->pendingTableCharacters()->at(i);
+                           
                            if (!isWhitespace(character)) {
                                // InTable anything else section:
                                tb->error(this);
-                               if (StringUtil::in(tb->currentElement().nodeName(), "table", "tbody", "tfoot", "thead", "tr")) {
+                               if (StringUtil::in(tb->currentElement()->tagName(), "table", "tbody", "tfoot", "thead", "tr")) {
                                    tb->setFosterInserts(true);
-                                   tb->process(character, InBody);
+                                   tb->process(character, InBody::instance());
                                    tb->setFosterInserts(false);
                                } else {
-                                   tb->process(character, InBody);
+                                   tb->process(character, InBody::instance());
                                }
                            } else
                                tb->insert(character);
                        }
-                       tb->newPendingTableCharacters();
+                       tb->newPendingTableCharacters(true);
                    }
                    tb->transition(tb->originalState());
                    return tb->process(t);
+               }
            }
            return true;
        }
        
        bool InCaption::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
+           static const StringRef errStartTags[] = {"caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr"};
+           static const StringRef errEndTags[] = {"body", "col", "colgroup", "html", "tbody", "td", "tfoot", "th", "thead", "tr"};
            
-           if (t->isEndTagToken() && t->asEndTagToken()->tagName(),"caption")) {
+           if (t->isEndTagToken() && t->asEndTagToken()->tagName().equals("caption")) {
                EndTagToken* endTag = t->asEndTagToken();
                StringRef name = endTag->tagName();
                if (!tb->inTableScope(name)) {
                    tb->error(this);
                    return false;
                } else {
-                   tb->generateImpliedEndTags();
+                   tb->generateImpliedEndTags(false);
                    if (!tb->currentElement()->tagName().equals("caption"))
                        tb->error(this);
-                   tb->popStackToClose("caption");
-                   tb->clearFormattingElementsToLastMarker();
+                   tb->popStackToClose(false, "caption");
+                   tb->clearFormattingElementsToLastMarker(false);
                    tb->transition(InTable::instance());
                }
-           } else if ((
-                       t->isStartTagToken() && StringUtil::in(t->asStartTagToken()->tagName(),
-                                                             "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr") ||
-                       t->isEndTagToken() && t->asEndTagToken()->tagName(),"table"))
-               ) {
-                   tb->error(this);
-                   bool processed = tb->process(new Token.EndTag("caption"));
-                   if (processed)
-                       return tb->process(t);
-               } else if (t->isEndTagToken() && StringUtil::in(t->asEndTagToken()->tagName(),
-                                                        "body", "col", "colgroup", "html", "tbody", "td", "tfoot", "th", "thead", "tr")) {
-                   tb->error(this);
-                   return false;
-               } else {
-                   return tb->process(t, InBody);
-               }
+           } else if ( (t->isStartTagToken() && StringUtil::in(t->asStartTagToken()->tagName(), errStartTags, arrayLength(errStartTags))) ||
+                       (t->isEndTagToken() && t->asEndTagToken()->tagName().equals("table"))) {
+               tb->error(this);
+               bool processed = processExtraEndTagToken("caption", tb);
+               if (processed)
+                   return tb->process(t);
+           } else if (t->isEndTagToken() && StringUtil::in(t->asEndTagToken()->tagName(), errEndTags, arrayLength(errEndTags))) {
+               tb->error(this);
+               return false;
+           } else {
+               return tb->process(t, InBody::instance());
+           }
            return true;
        }
-       
+    
+#define InColumnGroupAnythingElse \
+    do { \
+        bool processed = processExtraEndTagToken("colgroup", tb); \
+        if (processed)  \
+            return tb->process(t); \
+        return true; \
+    } while (0)
+    
        bool InColumnGroup::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (isWhitespace(t)) {
                tb->insert(t->asCharacterToken());
@@ -1123,19 +1169,20 @@ do { \
                case CSOUP_TOKEN_DOCTYPE:
                    tb->error(this);
                    break;
-               case CSOUP_TOKEN_START_TAG:
+               case CSOUP_TOKEN_START_TAG: {
                    StartTagToken* startTag = t->asStartTagToken();
                    StringRef name = startTag->tagName();
                    if (name.equals("html"))
-                       return tb->process(t, InBody);
+                       return tb->process(t, InBody::instance());
                    else if (name.equals("col"))
                        tb->insertEmpty(startTag);
                    else
-                       return anythingElse(t, tb);
+                       InColumnGroupAnythingElse; //return anythingElse(t, tb);
                    break;
-               case CSOUP_TOKEN_END_TAG:
+               }
+               case CSOUP_TOKEN_END_TAG: {
                    EndTagToken* endTag = t->asEndTagToken();
-                   name = endTag->tagName();
+                   StringRef name = endTag->tagName();
                    if (name.equals("colgroup")) {
                        if (tb->currentElement()->tagName().equals("html")) { // frag case
                            tb->error(this);
@@ -1145,96 +1192,96 @@ do { \
                            tb->transition(InTable::instance());
                        }
                    } else
-                       return anythingElse(t, tb);
+                       InColumnGroupAnythingElse; //anythingElse(t, tb);
                    break;
-               case EOF:
+               }
+               case CSOUP_TOKEN_EOF: {
                    if (tb->currentElement()->tagName().equals("html"))
                        return true; // stop parsing; frag case
                    else
-                       return anythingElse(t, tb);
-               default:
-                   return anythingElse(t, tb);
+                       InColumnGroupAnythingElse;//return anythingElse(t, tb);
+               }
+               default: {
+                   InColumnGroupAnythingElse;//return anythingElse(t, tb);
+               }
            }
            return true;
        }
        
-       bool anythingElse(Token t, TreeBuilder tb) {
-           bool processed = tb->process(new Token.EndTag("colgroup"));
-           if (processed) // only ignored in frag case
-               return tb->process(t);
-           return true;
-       }
-       
        bool InTableBody::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            switch (t->tokenType()) {
-               case CSOUP_TOKEN_START_TAG:
+               case CSOUP_TOKEN_START_TAG: {
                    StartTagToken* startTag = t->asStartTagToken();
                    StringRef name = startTag->tagName();
                    if (name.equals("tr")) {
-                       tb->clearStackToTableBodyContext();
+                       tb->clearStackToTableBodyContext(false);
                        tb->insert(startTag);
                        tb->transition(InRow::instance());
                    } else if (StringUtil::in(name, "th", "td")) {
                        tb->error(this);
-                       tb->process(new StartTagToken*("tr"));
+                       processExtraStartTagToken("tr", tb);
                        return tb->process(startTag);
                    } else if (StringUtil::in(name, "caption", "col", "colgroup", "tbody", "tfoot", "thead")) {
                        return exitTableBody(t, tb);
                    } else
                        return anythingElse(t, tb);
                    break;
-               case CSOUP_TOKEN_END_TAG:
+               }
+               case CSOUP_TOKEN_END_TAG: {
                    EndTagToken* endTag = t->asEndTagToken();
-                   name = endTag->tagName();
+                   StringRef name = endTag->tagName();
+                   static const StringRef errTags[] = {"body", "caption", "col", "colgroup", "html", "td", "th", "tr"};
+                   
                    if (StringUtil::in(name, "tbody", "tfoot", "thead")) {
                        if (!tb->inTableScope(name)) {
                            tb->error(this);
                            return false;
                        } else {
-                           tb->clearStackToTableBodyContext();
+                           tb->clearStackToTableBodyContext(false);
                            tb->pop();
                            tb->transition(InTable::instance());
                        }
                    } else if (name.equals("table")) {
                        return exitTableBody(t, tb);
-                   } else if (StringUtil::in(name, "body", "caption", "col", "colgroup", "html", "td", "th", "tr")) {
+                   } else if (StringUtil::in(name, errTags, arrayLength(errTags))) {
                        tb->error(this);
                        return false;
                    } else
                        return anythingElse(t, tb);
                    break;
+               }
                default:
                    return anythingElse(t, tb);
            }
            return true;
        }
        
-       bool exitTableBody(Token* t, HtmlTreeBuilder* tb) {
+       bool InTableBody::exitTableBody(Token* t, HtmlTreeBuilder* tb) {
            if (!(tb->inTableScope("tbody") || tb->inTableScope("thead") || tb->inScope("tfoot"))) {
                // frag case
                tb->error(this);
                return false;
            }
-           tb->clearStackToTableBodyContext();
-           tb->process(new Token.EndTag(tb->currentElement().nodeName())); // tbody, tfoot, thead
+           tb->clearStackToTableBodyContext(false);
+           processExtraEndTagToken(tb->currentElement()->tagName(), tb);
            return tb->process(t);
        }
        
-       bool anythingElse(Token* t, HtmlTreeBuilder* tb) {
-           return tb->process(t, InTable);
+       bool InTableBody::anythingElse(Token* t, HtmlTreeBuilder* tb) {
+           return tb->process(t, InTable::instance());
        }
        
        bool InRow::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (t->isStartTagToken()) {
                StartTagToken* startTag = t->asStartTagToken();
                StringRef name = startTag->tagName();
                
                if (StringUtil::in(name, "th", "td")) {
-                   tb->clearStackToTableRowContext();
+                   tb->clearStackToTableRowContext(false);
                    tb->insert(startTag);
                    tb->transition(InCell::instance());
                    tb->insertMarkerToFormattingElements();
@@ -1252,7 +1299,7 @@ do { \
                        tb->error(this); // frag
                        return false;
                    }
-                   tb->clearStackToTableRowContext();
+                   tb->clearStackToTableRowContext(false);
                    tb->pop(); // tr
                    tb->transition(InTableBody::instance());
                } else if (name.equals("table")) {
@@ -1262,7 +1309,7 @@ do { \
                        tb->error(this);
                        return false;
                    }
-                   tb->process(new Token.EndTag("tr"));
+                   processExtraEndTagToken("tr", tb);
                    return tb->process(t);
                } else if (StringUtil::in(name, "body", "caption", "col", "colgroup", "html", "td", "th")) {
                    tb->error(this);
@@ -1276,20 +1323,20 @@ do { \
            return true;
        }
        
-       bool anythingElse(Token* t, HtmlTreeBuilder* tb) {
-           return tb->process(t, InTable);
-       }
+    bool InRow::anythingElse(Token* t, HtmlTreeBuilder* tb) {
+        return tb->process(t, InTable::instance());
+    }
        
-       bool handleMissingTr(Token t, TreeBuilder tb) {
-           bool processed = tb->process(new Token.EndTag("tr"));
-           if (processed)
-               return tb->process(t);
-           else
-               return false;
-       }
+    bool InRow::handleMissingTr(Token* t, HtmlTreeBuilder* tb) {
+       bool processed = processExtraEndTagToken("tr", tb);
+       if (processed)
+           return tb->process(t);
+       else
+           return false;
+    }
        
        bool InCell::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (t->isEndTagToken()) {
                EndTagToken* endTag = t->asEndTagToken();
@@ -1301,11 +1348,11 @@ do { \
                        tb->transition(InRow::instance()); // might not be in scope if empty: <td /> and processing fake end tag
                        return false;
                    }
-                   tb->generateImpliedEndTags();
+                   tb->generateImpliedEndTags(false);
                    if (!tb->currentElement()->tagName().equals(name))
                        tb->error(this);
-                   tb->popStackToClose(name);
-                   tb->clearFormattingElementsToLastMarker();
+                   tb->popStackToClose(false, name);
+                   tb->clearFormattingElementsToLastMarker(false);
                    tb->transition(InRow::instance());
                } else if (StringUtil::in(name, "body", "caption", "col", "colgroup", "html")) {
                    tb->error(this);
@@ -1321,8 +1368,8 @@ do { \
                    return anythingElse(t, tb);
                }
            } else if (t->isStartTagToken() &&
-                      StringUtil::in(t->asStartTagToken()->tagName(),
-                                    "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr")) {
+                      StringUtil::in(t->asStartTagToken()->tagName(),"caption", "col", "colgroup", "tbody") &&
+                      StringUtil::in(t->asStartTagToken()->tagName(), "td", "tfoot", "th", "thead", "tr")) {
                           if (!(tb->inTableScope("td") || tb->inTableScope("th"))) {
                               tb->error(this);
                               return false;
@@ -1335,71 +1382,75 @@ do { \
            return true;
        }
        
-       bool anythingElse(Token* t, HtmlTreeBuilder* tb) {
-           return tb->process(t, InBody);
-       }
+    bool InCell::anythingElse(Token* t, HtmlTreeBuilder* tb) {
+        return tb->process(t, InBody::instance());
+    }
        
-       void closeCell(HtmlTreeBuilder tb) {
-           if (tb->inTableScope("td"))
-               tb->process(new Token.EndTag("td"));
-           else
-               tb->process(new Token.EndTag("th")); // only here if th or td in scope
-       }
+    void InCell::closeCell(HtmlTreeBuilder* tb) {
+        if (tb->inTableScope("td"))
+            processExtraEndTagToken("td", tb);
+        else
+            processExtraEndTagToken("th", tb); // only here if th or td in scope
+    }
        
        bool InSelect::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            switch (t->tokenType()) {
-               case CSOUP_TOKEN_CHARACTER:
+               case CSOUP_TOKEN_CHARACTER: {
                    CharacterToken*c = t->asCharacterToken();
-                   if (c.getData().equals(NULLString_)) {
+                   if (c->data().equals(nullString_)) {
                        tb->error(this);
                        return false;
                    } else {
                        tb->insert(c);
                    }
                    break;
-               case CSOUP_TOKEN_COMMENT:
+               }
+               case CSOUP_TOKEN_COMMENT: {
                    tb->insert(t->asCommentToken());
                    break;
-               case CSOUP_TOKEN_DOCTYPE:
+               }
+               case CSOUP_TOKEN_DOCTYPE: {
                    tb->error(this);
                    return false;
-               case CSOUP_TOKEN_START_TAG:
+               }
+               case CSOUP_TOKEN_START_TAG: {
                    StartTagToken* start = t->asStartTagToken();
                    StringRef name = start->tagName();
                    if (name.equals("html"))
-                       return tb->process(start, InBody);
+                       return tb->process(start, InBody::instance());
                    else if (name.equals("option")) {
-                       tb->process(new Token.EndTag("option"));
+                       processExtraEndTagToken("option", tb);
                        tb->insert(start);
                    } else if (name.equals("optgroup")) {
                        if (tb->currentElement()->tagName().equals("option"))
-                           tb->process(new Token.EndTag("option"));
+                           processExtraEndTagToken("option", tb);
                        else if (tb->currentElement()->tagName().equals("optgroup"))
-                           tb->process(new Token.EndTag("optgroup"));
+                           processExtraEndTagToken("optgroup", tb);
                        tb->insert(start);
                    } else if (name.equals("select")) {
                        tb->error(this);
-                       return tb->process(new Token.EndTag("select"));
+                       return processExtraEndTagToken("select", tb);
                    } else if (StringUtil::in(name, "input", "keygen", "textarea")) {
                        tb->error(this);
                        if (!tb->inSelectScope("select"))
                            return false; // frag
-                       tb->process(new Token.EndTag("select"));
+                       processExtraEndTagToken("select", tb);
                        return tb->process(start);
                    } else if (name.equals("script")) {
-                       return tb->process(t, InHead);
+                       return tb->process(t, InHead::instance());
                    } else {
                        return anythingElse(t, tb);
                    }
                    break;
-               case CSOUP_TOKEN_END_TAG:
+                }
+               case CSOUP_TOKEN_END_TAG: {
                    EndTagToken* end = t->asEndTagToken();
-                   name = end->tagName();
+                   StringRef name = end->tagName();
                    if (name.equals("optgroup")) {
                        if (tb->currentElement()->tagName().equals("option") && tb->aboveOnStack(tb->currentElement()) != NULL && tb->aboveOnStack(tb->currentElement())->tagName().equals("optgroup"))
-                           tb->process(new Token.EndTag("option"));
+                           processExtraEndTagToken("option", tb);
                        if (tb->currentElement()->tagName().equals("optgroup"))
                            tb->pop();
                        else
@@ -1414,13 +1465,14 @@ do { \
                            tb->error(this);
                            return false;
                        } else {
-                           tb->popStackToClose(name);
+                           tb->popStackToClose(false, name);
                            tb->resetInsertionMode();
                        }
                    } else
                        return anythingElse(t, tb);
                    break;
-               case EOF:
+               }
+               case CSOUP_TOKEN_EOF:
                    if (!tb->currentElement()->tagName().equals("html"))
                        tb->error(this);
                    break;
@@ -1430,50 +1482,51 @@ do { \
            return true;
        }
        
-       bool anythingElse(Token* t, HtmlTreeBuilder* tb) {
+       bool InSelect::anythingElse(Token* t, HtmlTreeBuilder* tb) {
            tb->error(this);
            return false;
        }
        
        bool InSelectInTable::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
-           if (t->isStartTagToken() && StringUtil::in(t->asStartTagToken()->tagName(), "caption", "table", "tbody", "tfoot", "thead", "tr", "td", "th")) {
+           if (t->isStartTagToken() && StringUtil::in(t->asStartTagToken()->tagName(), "caption", "table", "tbody", "tfoot") &&
+               StringUtil::in(t->asStartTagToken()->tagName(), "thead", "tr", "td", "th")) {
                tb->error(this);
-               tb->process(new Token.EndTag("select"));
+               processExtraEndTagToken("select", tb);
                return tb->process(t);
-           } else if (t->isEndTagToken() && StringUtil::in(t->asEndTagToken()->tagName(), "caption", "table", "tbody", "tfoot", "thead", "tr", "td", "th")) {
+           } else if (t->isEndTagToken() && StringUtil::in(t->asEndTagToken()->tagName(), "caption", "table", "tbody", "tfoot") && StringUtil::in(t->asEndTagToken()->tagName(), "thead", "tr", "td", "th")) {
                tb->error(this);
                if (tb->inTableScope(t->asEndTagToken()->tagName())) {
-                   tb->process(new Token.EndTag("select"));
+                   processExtraEndTagToken("select", tb);
                    return (tb->process(t));
                } else
                    return false;
            } else {
-               return tb->process(t, InSelect);
+               return tb->process(t, InSelect::instance());
            }
        }
        
        bool AfterBody::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (isWhitespace(t)) {
-               return tb->process(t, InBody);
-           } else if (t->asCommentToken()) {
+               return tb->process(t, InBody::instance());
+           } else if (t->isCommentToken()) {
                tb->insert(t->asCommentToken()); // into html node
            } else if (t->isDoctypeToken()) {
                tb->error(this);
                return false;
-           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName(),"html")) {
-               return tb->process(t, InBody);
-           } else if (t->isEndTagToken() && t->asEndTagToken()->tagName(),"html")) {
+           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("html")) {
+               return tb->process(t, InBody::instance());
+           } else if (t->isEndTagToken() && t->asEndTagToken()->tagName().equals("html")) {
                if (tb->isFragmentParsing()) {
                    tb->error(this);
                    return false;
                } else {
                    tb->transition(AfterAfterBody::instance());
                }
-           } else if (t.isEOF()) {
+           } else if (t->isEOFToken()) {
                // chillax! we're done
            } else {
                tb->error(this);
@@ -1484,11 +1537,11 @@ do { \
        }
        
        bool InFrameset::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (isWhitespace(t)) {
                tb->insert(t->asCharacterToken());
-           } else if (t->asCommentToken()) {
+           } else if (t->isCommentToken()) {
                tb->insert(t->asCommentToken());
            } else if (t->isDoctypeToken()) {
                tb->error(this);
@@ -1497,18 +1550,18 @@ do { \
                StartTagToken* start = t->asStartTagToken();
                StringRef name = start->tagName();
                if (name.equals("html")) {
-                   return tb->process(start, InBody);
+                   return tb->process(start, InBody::instance());
                } else if (name.equals("frameset")) {
                    tb->insert(start);
                } else if (name.equals("frame")) {
                    tb->insertEmpty(start);
                } else if (name.equals("noframes")) {
-                   return tb->process(start, InHead);
+                   return tb->process(start, InHead::instance());
                } else {
                    tb->error(this);
                    return false;
                }
-           } else if (t->isEndTagToken() && t->asEndTagToken()->tagName(),"frameset")) {
+           } else if (t->isEndTagToken() && t->asEndTagToken()->tagName().equals("frameset")) {
                if (tb->currentElement()->tagName().equals("html")) { // frag
                    tb->error(this);
                    return false;
@@ -1518,7 +1571,7 @@ do { \
                        tb->transition(AfterFrameset::instance());
                    }
                }
-           } else if (t.isEOF()) {
+           } else if (t->isEOFToken()) {
                if (!tb->currentElement()->tagName().equals("html")) {
                    tb->error(this);
                    return true;
@@ -1531,22 +1584,22 @@ do { \
        }
        
        bool AfterFrameset::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            if (isWhitespace(t)) {
                tb->insert(t->asCharacterToken());
-           } else if (t->asCommentToken()) {
+           } else if (t->isCommentToken()) {
                tb->insert(t->asCommentToken());
            } else if (t->isDoctypeToken()) {
                tb->error(this);
                return false;
-           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName(),"html")) {
-               return tb->process(t, InBody);
-           } else if (t->isEndTagToken() && t->asEndTagToken()->tagName(),"html")) {
+           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("html")) {
+               return tb->process(t, InBody::instance());
+           } else if (t->isEndTagToken() && t->asEndTagToken()->tagName().equals("html")) {
                tb->transition(AfterAfterFrameset::instance());
-           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName(),"noframes")) {
-               return tb->process(t, InHead);
-           } else if (t.isEOF()) {
+           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("noframes")) {
+               return tb->process(t, InHead::instance());
+           } else if (t->isEOFToken()) {
                // cool your heels, we're complete
            } else {
                tb->error(this);
@@ -1556,13 +1609,13 @@ do { \
        }
        
        bool AfterAfterBody::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
-           if (t->asCommentToken()) {
+           if (t->isCommentToken()) {
                tb->insert(t->asCommentToken());
-           } else if (t->isDoctypeToken() || isWhitespace(t) || (t->isStartTagToken() && t->asStartTagToken()->tagName(),"html"))) {
-               return tb->process(t, InBody);
-           } else if (t.isEOF()) {
+           } else if (t->isDoctypeToken() || isWhitespace(t) || (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("html"))) {
+               return tb->process(t, InBody::instance());
+           } else if (t->isEOFToken()) {
                // nice work chuck
            } else {
                tb->error(this);
@@ -1573,16 +1626,16 @@ do { \
        }
        
        bool AfterAfterFrameset::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
-           if (t->asCommentToken()) {
+           if (t->isCommentToken()) {
                tb->insert(t->asCommentToken());
-           } else if (t->isDoctypeToken() || isWhitespace(t) || (t->isStartTagToken() && t->asStartTagToken()->tagName(),"html"))) {
-               return tb->process(t, InBody);
-           } else if (t.isEOF()) {
+           } else if (t->isDoctypeToken() || isWhitespace(t) || (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("html"))) {
+               return tb->process(t, InBody::instance());
+           } else if (t->isEOFToken()) {
                // nice work chuck
-           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName(),"noframes")) {
-               return tb->process(t, InHead);
+           } else if (t->isStartTagToken() && t->asStartTagToken()->tagName().equals("noframes")) {
+               return tb->process(t, InHead::instance());
            } else {
                tb->error(this);
                return false;
@@ -1591,12 +1644,12 @@ do { \
        }
        
        bool ForeignContent::process(Token* t, HtmlTreeBuilder* tb) {
-           TokenDeleter tokenDeleter(t, tb->allocator());
+           //TokenDeleter tokenDeleter(t, tb->allocator());
            
            return true;
            // todo: implement. Also; how do we get here?
        }
-    };
+    
 
 }
 

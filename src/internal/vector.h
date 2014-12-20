@@ -6,6 +6,9 @@
 namespace csoup {
     namespace internal {
         
+        template <typename T>
+        class VectorIterator;
+        
         ///////////////////////////////////////////////////////////////////////////////
         // Vector
         
@@ -78,6 +81,16 @@ namespace csoup {
                 return stackTop_ - 1;
             }
             
+            const T* front() const {
+                CSOUP_ASSERT(!empty());
+                return stack_;
+            }
+            
+            T* front() {
+                CSOUP_ASSERT(!empty());
+                return stack_;
+            }
+            
             T* at(size_t i) {
                 CSOUP_ASSERT(i < size());
                 return stack_ + i;
@@ -92,7 +105,7 @@ namespace csoup {
                 if (n > size()) ensureExtraSize(n - size());
             }
             
-            void remove(size_t index) {
+            void remove(size_t index, bool del = true) {
                 CSOUP_ASSERT(index < size());
                 at(index)->~T();
                 std::memmove(stack_ + index, stack_ + index + 1,
@@ -134,12 +147,26 @@ namespace csoup {
                 return allocator_;
             }
             
+            VectorIterator<T> begin() {
+                return VectorIterator<T>(size(), 0, stack_);
+            }
+            
+            VectorIterator<T> end() {
+                return VectorIterator<T>(size(), size(), stack_);
+            }
+            
+            void remove(const VectorIterator<T>& it, bool del = true) {
+                remove(it->pos_);
+            }
+            
             //Allocator& getAllocator() { return *allocator_; }
             size_t size() const { return stackTop_ - stack_; }
             size_t capacity() const { return (stackEnd_ - stack_); }
             bool empty() const { return size() == 0; }
             
         private:
+            friend class VectorIterator<T>;
+            
             // Prohibit copy constructor & assignment operator.
             Vector(const Vector&);
             Vector& operator=(const Vector&);
@@ -181,6 +208,52 @@ namespace csoup {
             T *stackEnd_;
             size_t initialCapacity_;
         };
+        
+        template <class T>
+        class VectorIterator {
+        public:
+            bool hasNext() const {
+                return pos_ + 1 < size_;
+            }
+            
+            void next() {
+                // You can move to end
+                CSOUP_ASSERT(hasNext());
+                pos_ ++ ;
+            }
+            
+            bool hasPrevious() const {
+                return pos_ > 0;
+            }
+            
+            void previous() {
+                CSOUP_ASSERT(hasPrevious());
+                pos_ --;
+            }
+            
+            T* data() {
+                CSOUP_ASSERT(pos_ < size_);
+                return base_ + pos_;
+            }
+            
+            const T* data() const {
+                CSOUP_ASSERT(pos_ < size_);
+                return base_ + pos_;
+            }
+            
+            bool valid() const {
+                return CSOUP_ASSERT(pos_ < size_);
+            }
+            
+        private:
+            friend class Vector<T>;
+            VectorIterator(size_t s, size_t p, T* base) : pos_(p), size_(s), base_(base) {}
+            
+            size_t pos_;
+            size_t size_;
+            T* base_;
+        };
+        
     } // namespace internal
 } // namespace rapidjson
 

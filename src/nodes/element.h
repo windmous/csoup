@@ -114,6 +114,10 @@ namespace csoup {
             ensureAttributes()->addAttribute(space, key, value);
         }
         
+        void addAttributes(const Attributes& attrs) {
+            ensureAttributes()->addAttributes(attrs);
+        }
+        
         bool hasAttribute(const StringRef& key) const {
             return hasAttribute(CSOUP_ATTR_NAMESPACE_NONE, key);
         }
@@ -258,7 +262,7 @@ namespace csoup {
     }
         
     CREATE_TEXT_BASED_NODE_METHOD(DataNode)
-    CREATE_TEXT_BASED_NODE_METHOD(Comment)
+    CREATE_TEXT_BASED_NODE_METHOD(CommentNode)
     CREATE_TEXT_BASED_NODE_METHOD(TextNode)
         
     protected:

@@ -65,6 +65,15 @@ namespace csoup {
             return (reinterpret_cast<const char*>(&s1) == reinterpret_cast<const char*>(&s2)) ||
                     ((s1.size() == s2.size() && 0 == strCmp(s1.data(), s2.data(), s1.size())));
         }
+        
+        template <typename C1, int N>
+        inline bool strEquals(const C1& s1, const CharType (&s2)[N]) {
+            // A stupid static_assert! Must change this with an meta-programming library.
+            CSOUP_STATIC_ASSERT(C1::CSOUP_STRING_COMPARE_SUPPORTED == 1);
+            
+            return (reinterpret_cast<const char*>(&s1) == reinterpret_cast<const char*>(&s2)) ||
+            ((s1.size() == (N - 1) && 0 == strCmp(s1.data(), s2, s1.size())));
+        }
 
         template <typename C1, typename C2>
         inline bool strEqualsIgnoreCase(const C1& s1, const C2& s2) {

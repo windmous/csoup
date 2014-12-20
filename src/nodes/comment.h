@@ -5,18 +5,18 @@
 #include "../util/csoup_string.h"
 
 namespace csoup {
-    class Comment : public Node {
+    class CommentNode : public Node {
     public:
-        Comment(const StringRef& comment, const StringRef& baseUri, Allocator* allocator) :
+        CommentNode(const StringRef& comment, const StringRef& baseUri, Allocator* allocator) :
             Node(CSOUP_NODE_COMMENT, NULL, 0, baseUri, allocator) {
             setComment(comment);
         }
         
-        Comment(const StringRef& baseUri, Allocator* allocator) : Node(CSOUP_NODE_COMMENT, NULL, 0, baseUri, allocator) {
+        CommentNode(const StringRef& baseUri, Allocator* allocator) : Node(CSOUP_NODE_COMMENT, NULL, 0, baseUri, allocator) {
             comment_ = NULL;
         }
         
-        ~Comment() {
+        ~CommentNode() {
             if (comment_) {
                 comment_->~String();
                 allocator()->free(comment_);

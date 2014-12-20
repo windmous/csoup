@@ -35,7 +35,7 @@ namespace csoup {
             
             const T* at(size_t index) const {
                 CSOUP_ASSERT(index < size_);
-                if (index == size_ - 1) return *listTail_->data_;
+                if (index == size_ - 1) return listTail_->data_;
                 
                 ListNode* p = listHead_;
                 for (size_t i = 0; i < index; ++ i, p = p->next_)
@@ -45,7 +45,7 @@ namespace csoup {
             }
             
             T* at(size_t index) {
-                return const_cast<T*>(static_cast< const List<T>& >(*this).get(index));
+                return const_cast<T*>(static_cast< const List<T>& >(*this).at(index));
             }
             
             void push(const T& obj) {

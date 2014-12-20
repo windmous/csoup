@@ -50,6 +50,8 @@ namespace csoup {
                        const StringRef& s4, const StringRef& s5);
         static bool in(const StringRef& target, const StringRef& s1, const StringRef& s2, const StringRef& s3,
                        const StringRef& s4, const StringRef& s5, const StringRef& s6);
+        static bool in(const StringRef& target, const StringRef& s1, const StringRef& s2, const StringRef& s3,
+                       const StringRef& s4, const StringRef& s5, const StringRef& s6, const StringRef& s7);
         
         static bool in(const StringRef& taget, const StringRef* testset, size_t len);
         

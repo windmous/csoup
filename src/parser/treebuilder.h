@@ -8,10 +8,9 @@
 
 #ifndef CSOUP_TREEBUILDER_H_
 #define CSOUP_TREEBUILDER_H_
+#include "../util/stringref.h"
 
 namespace csoup {
-    
-    class StringRef;
     class String;
     class Allocator;
     class Element;
@@ -24,7 +23,7 @@ namespace csoup {
     
     namespace internal {
         template <class T>
-        class List;
+        class Vector;
         
         class TokeniserState;
     }
@@ -44,7 +43,7 @@ namespace csoup {
         
         void setTokeniserState(internal::TokeniserState* state);
         
-        internal::List<Element*>* stack() {
+        internal::Vector<Element*>* stack() {
             return stack_;
         }
 
@@ -53,6 +52,9 @@ namespace csoup {
         Tokeniser* tokeniser() {
             return tokeniser_;
         }
+        
+        StringRef baseUri() const;
+
     protected:
         virtual bool process(Token* token) = 0;
 
@@ -65,7 +67,7 @@ namespace csoup {
         // these are resources needed to be destroied
         CharacterReader* reader_;
         Tokeniser* tokeniser_;
-        internal::List<Element*>* stack_; // the stack of open elements
+        internal::Vector<Element*>* stack_; // the stack of open elements
         Token* currentToken_; // currentToken is used only for error tracking.
         
         // don't destroy these two guy!

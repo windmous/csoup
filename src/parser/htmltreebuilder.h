@@ -101,7 +101,7 @@ namespace csoup {
         
         Element* insertEmpty(StartTagToken* startTag);
         
-        // inserrtForm;
+        FormElement* insertForm(StartTagToken* startTag, bool onStack);
         
         void insert(CommentToken* commentToken);
         void insert(CharacterToken* characterToken);
@@ -144,7 +144,7 @@ namespace csoup {
         
         void replaceOnStack(Element* out, Element* in, bool del);
         
-        void replaceInQueue(internal::List<Element*>* queue, Element* out, Element* in, bool del);
+        void replaceInQueue(internal::Vector<Element*>* queue, Element* out, Element* in, bool del);
         
         void resetInsertionMode();
         
@@ -182,14 +182,14 @@ namespace csoup {
         
         void setFormElement(FormElement* formElement, bool del);
         
-        void newPendingTableCharacters();
+        void newPendingTableCharacters(bool del);
         
-        internal::List<CharacterToken*>* pendingTableCharacters() {
+        internal::Vector<CharacterToken*>* pendingTableCharacters() {
             return pendingTableCharacters_;
         }
         
         // M
-        void setPendingTableCharacters(internal::List<CharacterToken*>* pendingTableCharacters, bool del);
+        void setPendingTableCharacters(internal::Vector<CharacterToken*>* pendingTableCharacters, bool del);
         
         void generateImpliedEndTags(const StringRef& excludeTag, bool del);
         
@@ -221,9 +221,11 @@ namespace csoup {
         }
         
     private:
+        void clearPendingTableCharacters();
+        
         void insertNode(Node* node);
-        bool isElementInQueue(internal::List<Element*>* queue, Element* element);
-        void replaceInQueue(internal::List<Element>* queue, Element* out, Element* in);
+        bool isElementInQueue(internal::Vector<Element*>* queue, Element* element);
+        void replaceInQueue(internal::Vector<Element>* queue, Element* out, Element* in);
         bool isSameFormattingElement(Element* a, Element* b);
 
         void clearStackToContext(bool del, const StringRef& n1);
@@ -264,8 +266,8 @@ namespace csoup {
         Element* contextElement_;
         
         // these containers are just references
-        internal::List<Element*>* formattingElements_;
-        internal::List<CharacterToken*>* pendingTableCharacters_;
+        internal::Vector<Element*>* formattingElements_;
+        internal::Vector<CharacterToken*>* pendingTableCharacters_;
         
         bool framesetOk_;
         bool fosterInserts_;

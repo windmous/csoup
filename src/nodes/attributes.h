@@ -88,6 +88,12 @@ namespace csoup {
             addAttribute(CSOUP_ATTR_NAMESPACE_NONE, key, value);
         }
 
+        void addAttributes(const Attributes& attrs) {
+            for (size_t i = 0; i < attrs.size(); ++ i) {
+                const Attribute* attr = attrs.get(i);
+                this->addAttribute(attr->key(), attr->value());
+            }
+        }
         
         bool hasAttribute(AttributeNamespaceEnum space, const StringRef& key) const {
             if (!key.size() || !attributes_) return false;

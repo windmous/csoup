@@ -11,8 +11,9 @@ namespace csoup {
     class Node {
     public:
         Node(NodeTypeEnum type, Node* parent, size_t siblingIndex, const StringRef& baseUri, Allocator* allocator)
-        : type_(type), parent_(parent), siblingIndex_(siblingIndex), baseUri_(baseUri), allocator_(allocator) {
+        : type_(type), parent_(parent), siblingIndex_(siblingIndex), baseUri_(NULL), allocator_(allocator) {
             CSOUP_ASSERT(allocator != NULL);
+            baseUri_ = CSOUP_NEW2(allocator, String, baseUri, allocator);
         }
         
         virtual ~Node() = 0;
@@ -36,7 +37,7 @@ namespace csoup {
         }
         
         StringRef baseUri() const {
-            return baseUri_;
+            return baseUri_ ? baseUri_->ref() : StringRef("");
         }
         
         void before(Node* node);
@@ -62,11 +63,14 @@ namespace csoup {
         Node* parent_;
         size_t siblingIndex_;
         
-        StringRef baseUri_;
+        String* baseUri_;
         Allocator* allocator_;
     };
     
     inline Node::~Node() {
+        if (baseUri_) {
+            CSOUP_DELETE(allocator(), baseUri_);
+        }
     }
 }
 

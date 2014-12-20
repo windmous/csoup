@@ -105,6 +105,12 @@ namespace csoup {
         }
     }
     
+    Tag::GlobalTagMap::~GlobalTagMap() {
+        for (TagMap::iterator it = globalTags_.begin(); it != globalTags_.end(); ++ it) {
+            delete it->second;
+        }
+    }
+    
     Tag* Tag::GlobalTagMap::query(const csoup::StringRef &tagName) {
         std::string strTagName(tagName.data(), tagName.size());
         if (globalTags_.count(strTagName)) {

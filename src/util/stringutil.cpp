@@ -57,6 +57,16 @@ namespace csoup {
                internal::strEquals(target, s6);
     }
     
+    bool StringUtil::in(const StringRef &target, const StringRef &s1, const StringRef &s2, const StringRef &s3, const StringRef &s4, const StringRef &s5, const StringRef &s6, const StringRef &s7) {
+        return internal::strEquals(target, s1) ||
+        internal::strEquals(target, s2) ||
+        internal::strEquals(target, s3) ||
+        internal::strEquals(target, s4) ||
+        internal::strEquals(target, s5) ||
+        internal::strEquals(target, s6) ||
+        internal::strEquals(target, s7);
+    }
+    
     bool StringUtil::in(const StringRef& target, const StringRef* testset, size_t len) {
         for (size_t i = 0; i < len; ++ i) {
             if (internal::strEquals(target, testset[i])) {

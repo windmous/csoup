@@ -18,6 +18,9 @@
 #include "formelement.h"
 #include "parseerrorlist.h"
 #include "parseerror.h"
+#include "../nodes/comment.h"
+#include "../nodes/textnode.h"
+#include "../nodes/datanode.h"
 
 namespace csoup {
     using namespace internal;
@@ -44,10 +47,10 @@ namespace csoup {
     framesetOk_(true), fosterInserts_(false), fragmentParsing_(false), formElement_(NULL), allocator_(allocator) {
         CSOUP_ASSERT(allocator != NULL);
         
-        using internal::List;
+        using internal::Vector;
         
-        formattingElements_ = new (allocator->malloc_t< List<Element*> >()) List<Element*>(allocator);
-        pendingTableCharacters_ = new (allocator->malloc_t< List<CharacterToken*> >()) List<CharacterToken*>();
+        formattingElements_ = new (allocator->malloc_t< Vector<Element*> >()) Vector<Element*>(4, allocator);
+        pendingTableCharacters_ = new (allocator->malloc_t< Vector<CharacterToken*> >()) Vector<CharacterToken*>();
     }
     
     HtmlTreeBuilder::~HtmlTreeBuilder() {
@@ -57,12 +60,87 @@ namespace csoup {
         //allocator_->deconstructAndFree(headElement_);
         //allocator_->deconstructAndFree(contextElement_);
         allocator_->deconstructAndFree(formattingElements_);
+        clearPendingTableCharacters();
         allocator_->deconstructAndFree(pendingTableCharacters_);
+    }
+    
+    Element* HtmlTreeBuilder::insert(csoup::StartTagToken *startTag) {
+        if (startTag->selfClosing()) {
+            Element* el = insertEmpty(startTag);
+            stack_->push(el);
+            tokeniser_->transition(Data::instance());
+            tokeniser_->emit(CSOUP_NEW2(allocator(), EndTagToken, el->tagName(), allocator()));
+            return el;
+        }
+        
+        Element* el = new (allocator_->malloc_t<Element>())
+        Element(startTag->tagName(), *startTag->attributes(), baseUri_ ? baseUri_->ref() : "", allocator());
+        insert(el);
+        return el;
+    }
+    
+    Element* HtmlTreeBuilder::insert(const csoup::StringRef &startTagName) {
+        Element* el = new (allocator()->malloc_t<Element>()) Element(startTagName, baseUri_ ? baseUri_->ref() : "", allocator());
+        insert(el);
+        return el;
+    }
+    
+    void HtmlTreeBuilder::insert(csoup::Element *el) {
+        insertNode(el);
+        stack_->push(el);
+    }
+    
+    Element* HtmlTreeBuilder::insertEmpty(csoup::StartTagToken *startTag) {
+        Element* el = new (allocator()->malloc_t<Element>())
+            Element(startTag->tagName(), *startTag->attributes(), baseUri_ ? baseUri_->ref() : "", allocator());
+        insertNode(el);
+        if (startTag->selfClosing()) {
+            if (Tag::isKnownTag(startTag->tagName())) {
+                if (el->tag()->selfClosing()) {
+                    tokeniser()->setAcknowledgeSelfClosingFlag();
+                }
+            } else {
+                el->tag()->setSelfClosing();
+                tokeniser()->setAcknowledgeSelfClosingFlag();
+            }
+        }
+        
+        return el;
+    }
+    
+    FormElement* HtmlTreeBuilder::insertForm(StartTagToken *startTag, bool onStack) {
+        FormElement* el = new (allocator()->malloc_t<FormElement>())
+            FormElement(startTag->tagName(), *startTag->attributes(), baseUri_ ? baseUri_->ref() : "", allocator());
+        setFormElement(el, false);
+        insertNode(el);
+        if (onStack) {
+            stack_->push(el);
+        }
+        
+        return el;
+    }
+    
+    void HtmlTreeBuilder::insert(CommentToken* commentToken) {
+        CommentNode* comment = CSOUP_NEW3(allocator(), CommentNode,commentToken->data(), baseUri_ ? baseUri_->ref() : "", allocator());
+        insertNode(comment);
+    }
+    
+    void HtmlTreeBuilder::insert(csoup::CharacterToken *characterToken) {
+        Node* node;
+        StringRef tagName = currentElement()->tagName();
+        if (tagName.equals("script") || tagName.equals("style")) {
+            node = CSOUP_NEW3(allocator(), DataNode, characterToken->data(), baseUri_ ? baseUri_->ref() : "", allocator());
+        } else {
+            node = CSOUP_NEW3(allocator(), TextNode, characterToken->data(), baseUri_ ? baseUri_->ref() : "", allocator());
+        }
+        
+        currentElement()->appendNode(node);
     }
     
     Document* HtmlTreeBuilder::parse(const csoup::StringRef &input, const csoup::StringRef &baseUri, csoup::ParseErrorList *errors, csoup::Allocator *allocator) {
         // reset builder state
         formattingElements_->clear();
+        clearPendingTableCharacters();
         pendingTableCharacters_->clear();
         
         //state_ = ; // set to INITIAL state
@@ -82,6 +160,7 @@ namespace csoup {
                                         const StringRef& baseUri, ParseErrorList* errors, Allocator* allocator) {
         // reset builder state
         formattingElements_->clear();
+        clearPendingTableCharacters();
         pendingTableCharacters_->clear();
         
         //state_ = ; // set to INITIAL state
@@ -198,7 +277,7 @@ namespace csoup {
         return isElementInQueue(stack_, el);
     }
     
-    bool HtmlTreeBuilder::isElementInQueue(internal::List<Element*> *queue, csoup::Element *element) {
+    bool HtmlTreeBuilder::isElementInQueue(internal::Vector<Element*> *queue, csoup::Element *element) {
         for (size_t i = 0; i < queue->size(); ++ i) {
             if (element == *queue->at(i)) {
                 return true;
@@ -426,7 +505,7 @@ namespace csoup {
         replaceInQueue(stack_, out, in, del);
     }
     
-    void HtmlTreeBuilder::replaceInQueue(internal::List<Element *> *queue, Element *out, Element *in, bool del) {
+    void HtmlTreeBuilder::replaceInQueue(internal::Vector<Element *> *queue, Element *out, Element *in, bool del) {
         for (size_t i = stack_->size(); i > 0; -- i) {
             Element* cur = *stack_->at(i - 1);
             if (cur == out) {
@@ -564,13 +643,26 @@ namespace csoup {
         formElement_ = formElement;
     }
     
-    void HtmlTreeBuilder::newPendingTableCharacters() {
-        if (pendingTableCharacters_) CSOUP_DELETE(allocator(), pendingTableCharacters_);
-        pendingTableCharacters_ = CSOUP_NEW1(allocator(), internal::List<CharacterToken*>, allocator());
+    void HtmlTreeBuilder::clearPendingTableCharacters() {
+        if (!pendingTableCharacters_) return ;
+        for (size_t i = 0; i < pendingTableCharacters_->size(); ++ i) {
+            CSOUP_DELETE(allocator(), *pendingTableCharacters_->at(i));
+        }
     }
     
-    void HtmlTreeBuilder::setPendingTableCharacters(internal::List<CharacterToken*> *pendingTableCharacters, bool del) {
-        if (del && pendingTableCharacters_) CSOUP_DELETE(allocator(), pendingTableCharacters_);
+    void HtmlTreeBuilder::newPendingTableCharacters(bool del) {
+        if (del) clearPendingTableCharacters();
+        if (pendingTableCharacters_) CSOUP_DELETE(allocator(), pendingTableCharacters_);
+        pendingTableCharacters_ = CSOUP_NEW2(allocator(), internal::Vector<CharacterToken*>, 4, allocator());
+    }
+    
+    void HtmlTreeBuilder::setPendingTableCharacters(internal::Vector<CharacterToken*> *pendingTableCharacters, bool del) {
+        if (pendingTableCharacters_ == pendingTableCharacters) {
+            return ;
+        }
+        
+        if (del) clearPendingTableCharacters();
+        if (pendingTableCharacters_) CSOUP_DELETE(allocator(), pendingTableCharacters_);
         pendingTableCharacters_ = pendingTableCharacters;
     }
     
@@ -620,7 +712,7 @@ namespace csoup {
             return ;
         
         Element* entry = *formattingElements_->back();
-        int pos = size - 1;
+        int pos = (int)(size - 1);
         bool skip = false;
         while (true) {
             if (pos == 0) {
